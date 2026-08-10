@@ -1,12 +1,14 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
+import { existsSync } from "node:fs";
 import { cp, mkdtemp, readFile, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { runConformance } from "../src/index.js";
 
 const workspace = resolve(new URL("../..", import.meta.url).pathname);
+const products = existsSync(join(workspace, "omniform")) ? workspace : resolve(workspace, "..");
 
 test("current ecosystem emits a valid report with no deterministic failures", async () => {
   const report = await runConformance({ output: false });
@@ -19,7 +21,7 @@ test("current ecosystem emits a valid report with no deterministic failures", as
 test("reverse runtime dependency fails ARCH-001 with inspectable evidence", async () => {
   const fixture = await mkdtemp(join(tmpdir(), "omniseed-conformance-"));
   const form = join(fixture, "omniform");
-  await cp(join(workspace, "omniform"), form, { recursive: true, filter: source => !source.includes("/.git") && !source.includes("/node_modules") });
+  await cp(join(products, "omniform"), form, { recursive: true, filter: source => !source.includes("/.git") && !source.includes("/node_modules") });
   const manifestPath = join(form, "package.json");
   const manifest = JSON.parse(await readFile(manifestPath, "utf8"));
   manifest.dependencies["@omniseed/engine"] = "1.0.0-alpha.2";

@@ -1,5 +1,6 @@
 import { execFileSync } from "node:child_process";
 import { readFile, readdir, mkdir, writeFile } from "node:fs/promises";
+import { existsSync } from "node:fs";
 import { dirname, join, relative, resolve } from "node:path";
 import Ajv2020 from "ajv/dist/2020.js";
 import addFormats from "ajv-formats";
@@ -10,9 +11,9 @@ const root = resolve(new URL("../..", import.meta.url).pathname);
 
 export async function runConformance(options = {}) {
   const roots = {
-    omniform: resolve(options.omniform ?? join(root, "omniform")),
-    omniseed: resolve(options.engine ?? join(root, "omniseed")),
-    omniseedos: resolve(options.os ?? join(root, "omniseedos"))
+    omniform: resolve(options.omniform ?? defaultRepository("omniform")),
+    omniseed: resolve(options.engine ?? defaultRepository("omniseed")),
+    omniseedos: resolve(options.os ?? defaultRepository("omniseedos"))
   };
   const catalogue = parse(await readFile(join(root, "constitution/invariants.yaml"), "utf8"));
   const compatibility = parse(await readFile(join(root, "compatibility/packages.yaml"), "utf8"));
@@ -62,6 +63,11 @@ export async function runConformance(options = {}) {
   return report;
 }
 
+function defaultRepository(name) {
+  const nested = join(root, name);
+  return existsSync(nested) ? nested : resolve(root, "..", name);
+}
+
 async function buildContext(roots, compatibility) {
   const repositories = {};
   for (const [name, path] of Object.entries(roots)) {
@@ -104,4 +110,3 @@ async function validateReport(report) {
   addFormats(ajv);
   if (!ajv.validate(schema, report)) throw new Error(`Generated report is invalid: ${ajv.errorsText(ajv.errors)}`);
 }
-
