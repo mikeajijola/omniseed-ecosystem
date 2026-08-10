@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>OmniSeed Ecosystem Conformance</title>
+    <style>
+      body { font: 16px/1.5 system-ui, sans-serif; max-width: 54rem; margin: 3rem auto; padding: 0 1rem; color: #17202a; }
+      dl { display: grid; grid-template-columns: max-content 1fr; gap: .4rem 1rem; }
+      dt { font-weight: 700; } code { overflow-wrap: anywhere; }
+      li { margin: .5rem 0; } .failed { color: #a40000; } .warning { color: #7a4b00; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>OmniSeed Ecosystem Conformance</h1>
+      <p>This page shows deterministic checks separately from rules that still need architectural judgment.</p>
+      <p><a href="latest.json">Read the machine-readable report</a></p>
+      <section id="report" aria-live="polite"><p>Loading the latest report…</p></section>
+    </main>
+    <script type="module">
+      const target = document.querySelector("#report");
+      try {
+        const report = await fetch("latest.json", { cache: "no-store" }).then(response => {
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          return response.json();
+        });
+        const visible = report.findings.filter(item => item.status !== "passed");
+        target.replaceChildren();
+        const heading = document.createElement("h2"); heading.textContent = "Latest result"; target.append(heading);
+        const summary = document.createElement("dl");
+        for (const [label, value] of Object.entries(report.summary)) {
+          const term = document.createElement("dt"); term.textContent = label;
+          const detail = document.createElement("dd"); detail.textContent = value;
+          summary.append(term, detail);
+        }
+        target.append(summary);
+        const time = document.createElement("p"); time.textContent = `Generated ${report.generatedAt}`; target.append(time);
+        const subheading = document.createElement("h2"); subheading.textContent = "Open review items"; target.append(subheading);
+        const list = document.createElement("ul");
+        visible.forEach(item => {
+          const entry = document.createElement("li"); entry.className = item.status;
+          entry.textContent = `${item.invariant} — ${item.status}: ${item.evidence}`; list.append(entry);
+        });
+        target.append(list);
+      } catch (error) {
+        target.textContent = `The report could not be loaded: ${error.message}`;
+      }
+    </script>
+  </body>
+</html>

@@ -8,6 +8,8 @@ on:
 
 permissions:
   contents: read
+  pages: write
+  id-token: write
 
 jobs:
   conformance:
@@ -57,3 +59,31 @@ jobs:
         with:
           name: conformance-report
           path: omniseed-ecosystem/reports/latest.json
+      - name: Configure Pages
+        if: github.event_name != 'pull_request'
+        uses: actions/configure-pages@v6
+      - name: Prepare Pages site
+        if: github.event_name != 'pull_request'
+        run: |
+          mkdir -p _site/conformance
+          cp reports/latest.json _site/conformance/latest.json
+          cp site/conformance/index.html _site/conformance/index.html
+          cp site/index.html _site/index.html
+        working-directory: omniseed-ecosystem
+      - name: Upload Pages site
+        if: github.event_name != 'pull_request'
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: omniseed-ecosystem/_site
+
+  deploy-pages:
+    if: github.event_name != 'pull_request'
+    needs: conformance
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy Pages
+        id: deployment
+        uses: actions/deploy-pages@v5

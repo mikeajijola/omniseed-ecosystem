@@ -40,7 +40,8 @@ npx omniseed-conformance \
 
 The command writes `reports/latest.json`. A failed deterministic invariant exits with a non-zero status. Warnings remain visible without pretending that a judgment is a machine-proven failure.
 
+The latest CI-generated report is published for machines at <https://mikeajijola.github.io/omniseed-ecosystem/conformance/latest.json> and for people at <https://mikeajijola.github.io/omniseed-ecosystem/conformance/>.
+
 ## Status
 
 This is the Phase 1 foundation of the proposed ecosystem-governance programme. The first runner covers objective repository, dependency, mutation-boundary, Provider-truth, evidence, package, and documentation checks. Semantic architecture review remains a separate human or AI-assisted process.
-
