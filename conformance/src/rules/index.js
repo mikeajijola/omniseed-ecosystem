@@ -1,5 +1,6 @@
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
+import { execFileSync } from "node:child_process";
 
 const pass = evidence => ({ status: "passed", evidence });
 const fail = (repository, evidence) => ({ status: "failed", repository, evidence });
@@ -17,6 +18,8 @@ export const ruleTests = {
   "missing-provider-gap": missingProviderGap,
   "engine-no-vendor-sdk": engineNoVendorSdk,
   "evidence-provenance": evidenceProvenance,
+  "language-independent-provider-boundary": languageIndependentProviderBoundary,
+  "external-provider-lifecycle": externalProviderLifecycle,
   "os-authority-boundary": osAuthorityBoundary,
   "os-mutation-delegation": osMutationDelegation,
   "os-operation-identity": osOperationIdentity,
@@ -79,7 +82,7 @@ async function controlledMutationPath({ repositories }) {
   const expected = ["async plan(", "async approve(", "async apply(", "provider.apply(action)"];
   const missing = expected.filter(text => !engine.includes(text));
   if (missing.length) return fail("omniseed", `Controlled mutation markers missing: ${missing.join(", ")}`);
-  const providerApplyCalls = await occurrences(repositories.omniseed, /\.apply\(action/g, ["src/engine.js"]);
+  const providerApplyCalls = await occurrences(repositories.omniseed, /\.apply\(action/g, ["src/engine.js", "src/provider.js", "src/provider-protocol.js"]);
   return providerApplyCalls.length ? fail("omniseed", `Provider apply is called outside engine apply: ${providerApplyCalls.join(", ")}`) : pass("Provider apply is reached through the engine plan/approve/apply lifecycle.");
 }
 
@@ -123,6 +126,38 @@ async function evidenceProvenance({ repositories }) {
   const engine = await repositories.omniseed.read("src/engine.js");
   const expected = [provider.includes("source: this.metadata.id"), engine.includes("observedAt: observation.checkedAt"), engine.includes("resourceId: action.resourceId")];
   return expected.every(Boolean) ? pass("Provider evidence records source, resource identity, and observation time.") : fail("omniseed", "Evidence source, resource, or observation-time provenance marker is missing.");
+}
+
+async function languageIndependentProviderBoundary({ repositories }) {
+  const repo = repositories.omniseed;
+  const provider = await repo.read("src/provider.js"), protocol = await repo.read("src/provider-protocol.js"), transport = await repo.read("src/transports/stdio-json-rpc.js");
+  const expected = [
+    provider.includes("class InProcessProviderHandle"),
+    provider.includes("providerHandle(provider)"),
+    protocol.includes("class ProtocolProviderHandle"),
+    protocol.includes("omniseed.provider.protocol/1.0"),
+    protocol.includes("transport.start()") && protocol.includes("transport.request(") && protocol.includes("transport.close()"),
+    transport.includes("class StdioJsonRpcTransport")
+  ];
+  if (!expected.every(Boolean)) return fail("omniseed", "Normalized in-process/protocol Provider boundary or versioned transport contract is missing.");
+  const lifecycle = await combinedFiles(repo, ["src/compiler.js", "src/planner.js", "src/resolver.js", "src/engine.js"]);
+  const languageSpecific = /python|python3|\.py\b/i.test(lifecycle);
+  const transportSpecific = /stdio|json-rpc|child_process|spawn\(/i.test(lifecycle);
+  return languageSpecific || transportSpecific
+    ? fail("omniseed", "Compiler, planner, resolver, or engine lifecycle contains language- or transport-specific Provider logic.")
+    : pass("ProviderRegistry normalizes in-process and protocol Providers; core lifecycle code contains no implementation-language or transport branching.");
+}
+
+function externalProviderLifecycle({ repositories }) {
+  const repo = repositories.omniseed;
+  if (!repo.files.includes("examples/providers/python_reference_provider.py") || !repo.files.includes("test/provider-protocol.test.js")) return fail("omniseed", "Non-JavaScript reference Provider or lifecycle test is missing.");
+  try {
+    execFileSync(process.execPath, ["--test", "--test-name-pattern=Python Provider completes", "test/provider-protocol.test.js"], { cwd: repo.path, encoding: "utf8", timeout: 15000, stdio: "pipe" });
+    return pass("Python reference Provider passed the real inspect, resolve, plan, approve, apply, observe, persist, recompile, reconcile, invoke, and shutdown lifecycle test.");
+  } catch (error) {
+    const evidence = String(error.stdout || error.stderr || error.message).trim().slice(0, 1000);
+    return fail("omniseed", `External Provider lifecycle test failed: ${evidence}`);
+  }
 }
 
 async function osAuthorityBoundary({ repositories }) {

@@ -117,6 +117,24 @@ invariants:
     test: evidence-provenance
     remediation: Record the source, Provider, resource, and observation time where applicable.
     owner: omniseed
+  - id: ENGINE-008
+    principle: PROVIDER_TRUTH
+    description: OmniSeed's Provider execution boundary does not require implementations to run inside the Node.js process.
+    severity: critical
+    scope: [omniseed]
+    deterministic: true
+    test: language-independent-provider-boundary
+    remediation: Restore the normalized Provider handle and transport-neutral protocol boundary without branching engine lifecycle code by language.
+    owner: omniseed
+  - id: ENGINE-009
+    principle: DETERMINISTIC_MUTATION
+    description: A reference Provider implemented outside JavaScript passes the real governed Provider lifecycle test.
+    severity: critical
+    scope: [omniseed]
+    deterministic: true
+    test: external-provider-lifecycle
+    remediation: Restore the external reference Provider and its inspect, plan, approve, apply, observe, persist, recompile, and reconcile test.
+    owner: omniseed
   - id: OS-001
     principle: INTERFACE_NEUTRALITY
     description: OmniSeed OS does not independently calculate authoritative capability status.
@@ -216,4 +234,3 @@ invariants:
     test: append-only-evidence-review
     remediation: Append corrected or superseding evidence while retaining history.
     owner: omniseed
-

@@ -15,7 +15,7 @@ test("current ecosystem emits a valid report with no deterministic failures", as
   assert.equal(report.summary.failed, 0);
   assert.ok(report.summary.passed >= 15);
   assert.ok(report.summary.notAutomated >= 1);
-  assert.equal(report.findings.length, 24);
+  assert.equal(report.findings.length, 26);
 });
 
 test("reverse runtime dependency fails ARCH-001 with inspectable evidence", async () => {
