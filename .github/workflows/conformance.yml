@@ -14,25 +14,25 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out governance repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           path: omniseed-ecosystem
       - name: Check out Omniform
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           repository: mikeajijola/omniform
           path: omniform
       - name: Check out OmniSeed
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           repository: mikeajijola/omniseed
           path: omniseed
       - name: Check out OmniSeed OS
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           repository: mikeajijola/omniseedos
           path: omniseedos
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: npm
@@ -53,8 +53,7 @@ jobs:
           --fail-on warning
         working-directory: omniseed-ecosystem
       - name: Upload conformance report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: conformance-report
           path: omniseed-ecosystem/reports/latest.json
-
