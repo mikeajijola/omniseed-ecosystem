@@ -1,0 +1,218 @@
+{
+  "ecosystemVersion": "1",
+  "generatedAt": "2026-08-10T14:28:37.625Z",
+  "repositories": {
+    "omniform": {
+      "commit": "9634d144b4da56a53397baa813f13f07856771f5",
+      "path": "omniform"
+    },
+    "omniseed": {
+      "commit": "45199a945ebc90a83b1177588672422fa7587f06",
+      "path": "omniseed"
+    },
+    "omniseedos": {
+      "commit": "4a2c74b8522498d6080865889d15a1635e9a761e",
+      "path": "omniseedos"
+    }
+  },
+  "summary": {
+    "passed": 20,
+    "failed": 0,
+    "warnings": 0,
+    "notAutomated": 4
+  },
+  "findings": [
+    {
+      "invariant": "ARCH-001",
+      "status": "passed",
+      "severity": "critical",
+      "repository": "omniform,omniseed,omniseedos",
+      "evidence": "Package manifests and source imports preserve Omniform → OmniSeed → OmniSeed OS; no product imports governance.",
+      "test": "dependency-direction"
+    },
+    {
+      "invariant": "FORM-001",
+      "status": "passed",
+      "severity": "critical",
+      "repository": "omniform",
+      "evidence": "Omniform schema contains no runtime Provider-status fields.",
+      "test": "omniform-no-runtime-provider-status"
+    },
+    {
+      "invariant": "FORM-002",
+      "status": "passed",
+      "severity": "critical",
+      "repository": "omniform",
+      "evidence": "Omniform declares no credential fields and has no Provider SDK dependency.",
+      "test": "omniform-no-credentials-or-provider-sdk"
+    },
+    {
+      "invariant": "FORM-003",
+      "status": "passed",
+      "severity": "high",
+      "repository": "omniform",
+      "evidence": "Omniform schema contains no navigation, layout, screen, widget, route, or view-state fields.",
+      "test": "omniform-no-ui-state"
+    },
+    {
+      "invariant": "FORM-004",
+      "status": "passed",
+      "severity": "critical",
+      "repository": "omniform,omniseed",
+      "evidence": "Engine state keeps deployed, observed, and evidence collections separate from the Omniform declaration.",
+      "test": "state-record-separation"
+    },
+    {
+      "invariant": "FORM-005",
+      "status": "not_automated",
+      "severity": "high",
+      "repository": "omniform",
+      "evidence": "This invariant requires semantic or future behavioral review.",
+      "test": "semantic-portability-review"
+    },
+    {
+      "invariant": "ENGINE-001",
+      "status": "passed",
+      "severity": "critical",
+      "repository": "omniseed",
+      "evidence": "Provider apply is reached through the engine plan/approve/apply lifecycle.",
+      "test": "controlled-mutation-path"
+    },
+    {
+      "invariant": "ENGINE-002",
+      "status": "passed",
+      "severity": "critical",
+      "repository": "omniseed",
+      "evidence": "Apply loads the stored plan and verifies plan and approval identity.",
+      "test": "exact-persisted-plan"
+    },
+    {
+      "invariant": "ENGINE-003",
+      "status": "passed",
+      "severity": "critical",
+      "repository": "omniseed",
+      "evidence": "Apply rejects both state-version and declaration drift as plan_stale.",
+      "test": "stale-plan-protection"
+    },
+    {
+      "invariant": "ENGINE-004",
+      "status": "passed",
+      "severity": "critical",
+      "repository": "omniseed",
+      "evidence": "Provider implementations enter the runtime through explicit ProviderRegistry registration.",
+      "test": "explicit-provider-registration"
+    },
+    {
+      "invariant": "ENGINE-005",
+      "status": "passed",
+      "severity": "critical",
+      "repository": "omniseed",
+      "evidence": "Provider gaps are compiled explicitly and tests cover absent Providers without fallback.",
+      "test": "missing-provider-gap"
+    },
+    {
+      "invariant": "ENGINE-006",
+      "status": "passed",
+      "severity": "high",
+      "repository": "omniseed",
+      "evidence": "Engine runtime dependencies contain only the portable Omniform package.",
+      "test": "engine-no-vendor-sdk"
+    },
+    {
+      "invariant": "ENGINE-007",
+      "status": "passed",
+      "severity": "critical",
+      "repository": "omniseed",
+      "evidence": "Provider evidence records source, resource identity, and observation time.",
+      "test": "evidence-provenance"
+    },
+    {
+      "invariant": "OS-001",
+      "status": "passed",
+      "severity": "critical",
+      "repository": "omniseedos",
+      "evidence": "Company and Lily projections obtain capability state from engine.inspect().",
+      "test": "os-authority-boundary"
+    },
+    {
+      "invariant": "OS-002",
+      "status": "passed",
+      "severity": "critical",
+      "repository": "omniseedos",
+      "evidence": "Plan, approval, and apply HTTP paths delegate to the engine.",
+      "test": "os-mutation-delegation"
+    },
+    {
+      "invariant": "OS-003",
+      "status": "passed",
+      "severity": "high",
+      "repository": "omniseedos",
+      "evidence": "Lily and search preserve registered engine operation IDs.",
+      "test": "os-operation-identity"
+    },
+    {
+      "invariant": "CLIENT-001",
+      "status": "not_automated",
+      "severity": "high",
+      "repository": "omniseed,omniseedos",
+      "evidence": "This invariant requires semantic or future behavioral review.",
+      "test": "cross-client-operation-parity"
+    },
+    {
+      "invariant": "AGENT-001",
+      "status": "passed",
+      "severity": "critical",
+      "repository": "omniseed,omniseedos",
+      "evidence": "OS and Lily contain no direct imports or calls to known vendor SDKs.",
+      "test": "no-agent-provider-bypass"
+    },
+    {
+      "invariant": "AGENT-002",
+      "status": "not_automated",
+      "severity": "critical",
+      "repository": "omniseed",
+      "evidence": "This invariant requires semantic or future behavioral review.",
+      "test": "proposal-lifecycle-review"
+    },
+    {
+      "invariant": "PKG-001",
+      "status": "passed",
+      "severity": "high",
+      "repository": "omniform,omniseed,omniseedos",
+      "evidence": "All packages match supported channel 1.0.0-alpha.2.",
+      "test": "package-compatibility"
+    },
+    {
+      "invariant": "DOC-001",
+      "status": "passed",
+      "severity": "medium",
+      "repository": "omniform,omniseed,omniseedos",
+      "evidence": "All product READMEs state their distinct ownership boundary.",
+      "test": "ownership-documentation"
+    },
+    {
+      "invariant": "ID-001",
+      "status": "passed",
+      "severity": "high",
+      "repository": "omniform,omniseed",
+      "evidence": "Omniform defines stable ID syntax and requires IDs for Capabilities and operations.",
+      "test": "stable-authority-ids"
+    },
+    {
+      "invariant": "EVID-001",
+      "status": "passed",
+      "severity": "critical",
+      "repository": "omniseed",
+      "evidence": "Provider evidence records source, resource identity, and observation time.",
+      "test": "evidence-provenance"
+    },
+    {
+      "invariant": "EVID-002",
+      "status": "not_automated",
+      "severity": "critical",
+      "repository": "omniseed",
+      "evidence": "This invariant requires semantic or future behavioral review.",
+      "test": "append-only-evidence-review"
+    }
+  ]
+}

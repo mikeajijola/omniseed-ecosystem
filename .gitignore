@@ -1,0 +1,9 @@
+node_modules/
+coverage/
+reports/history/
+
+# Sibling product checkouts are inputs to conformance, not contents of this repo.
+/omniform/
+/omniseed/
+/omniseedos/
+

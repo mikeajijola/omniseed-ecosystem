@@ -1,0 +1,219 @@
+version: 1
+invariants:
+  - id: ARCH-001
+    principle: GOVERNANCE_IS_NOT_RUNTIME
+    description: Dependency direction remains Omniform to OmniSeed to OmniSeed OS, and no product depends on the governance repository.
+    severity: critical
+    scope: [omniform, omniseed, omniseedos]
+    deterministic: true
+    test: dependency-direction
+    remediation: Remove the reverse or governance runtime dependency and use the owning package contract.
+    owner: omniseed-ecosystem
+  - id: FORM-001
+    principle: STATE_SEPARATION
+    description: Omniform contains no runtime Provider status.
+    severity: critical
+    scope: [omniform]
+    deterministic: true
+    test: omniform-no-runtime-provider-status
+    remediation: Store live Provider status in OmniSeed runtime state.
+    owner: omniform
+  - id: FORM-002
+    principle: PORTABLE_SEMANTICS_ONLY
+    description: Omniform contains no credentials or Provider SDK dependency.
+    severity: critical
+    scope: [omniform]
+    deterministic: true
+    test: omniform-no-credentials-or-provider-sdk
+    remediation: Move credentials to runtime configuration and Provider code to an adapter package.
+    owner: omniform
+  - id: FORM-003
+    principle: PORTABLE_SEMANTICS_ONLY
+    description: Omniform contains no UI-specific state.
+    severity: high
+    scope: [omniform]
+    deterministic: true
+    test: omniform-no-ui-state
+    remediation: Move navigation, layout, and view state to OmniSeed OS.
+    owner: omniform
+  - id: FORM-004
+    principle: STATE_SEPARATION
+    description: Desired, deployed, observed, and evidence records are not collapsed.
+    severity: critical
+    scope: [omniform, omniseed]
+    deterministic: true
+    test: state-record-separation
+    remediation: Restore separate declaration, deployment, observation, and evidence records.
+    owner: omniseed
+  - id: FORM-005
+    principle: PORTABLE_SEMANTICS_ONLY
+    description: Schema additions require explicit portability justification.
+    severity: high
+    scope: [omniform]
+    deterministic: false
+    test: semantic-portability-review
+    remediation: Test the idea across unrelated domains or keep it in Provider or resource spec.
+    owner: omniform
+  - id: ENGINE-001
+    principle: DETERMINISTIC_MUTATION
+    description: Controlled mutation routes through plan, approve, and apply.
+    severity: critical
+    scope: [omniseed]
+    deterministic: true
+    test: controlled-mutation-path
+    remediation: Route the mutation through the engine lifecycle.
+    owner: omniseed
+  - id: ENGINE-002
+    principle: DETERMINISTIC_MUTATION
+    description: Apply requires an exact persisted plan.
+    severity: critical
+    scope: [omniseed]
+    deterministic: true
+    test: exact-persisted-plan
+    remediation: Load and verify the reviewed stored plan before apply.
+    owner: omniseed
+  - id: ENGINE-003
+    principle: DETERMINISTIC_MUTATION
+    description: Declaration or state drift invalidates a reviewed plan.
+    severity: critical
+    scope: [omniseed]
+    deterministic: true
+    test: stale-plan-protection
+    remediation: Bind plans to declaration hash and state version.
+    owner: omniseed
+  - id: ENGINE-004
+    principle: PROVIDER_TRUTH
+    description: Provider implementations are explicitly registered.
+    severity: critical
+    scope: [omniseed]
+    deterministic: true
+    test: explicit-provider-registration
+    remediation: Require registration and never construct a desired Provider implicitly.
+    owner: omniseed
+  - id: ENGINE-005
+    principle: PROVIDER_TRUTH
+    description: Missing Providers remain truthful gaps.
+    severity: critical
+    scope: [omniseed]
+    deterministic: true
+    test: missing-provider-gap
+    remediation: Expose the gap instead of fabricating or silently selecting a fallback.
+    owner: omniseed
+  - id: ENGINE-006
+    principle: PROVIDER_TRUTH
+    description: Vendor SDKs do not become engine core dependencies.
+    severity: high
+    scope: [omniseed]
+    deterministic: true
+    test: engine-no-vendor-sdk
+    remediation: Move vendor integration behind a Provider package or adapter.
+    owner: omniseed
+  - id: ENGINE-007
+    principle: EVIDENCE_BEFORE_CLAIMS
+    description: Evidence and observations retain provenance.
+    severity: critical
+    scope: [omniseed]
+    deterministic: true
+    test: evidence-provenance
+    remediation: Record the source, Provider, resource, and observation time where applicable.
+    owner: omniseed
+  - id: OS-001
+    principle: INTERFACE_NEUTRALITY
+    description: OmniSeed OS does not independently calculate authoritative capability status.
+    severity: critical
+    scope: [omniseedos]
+    deterministic: true
+    test: os-authority-boundary
+    remediation: Render the state returned by OmniSeed inspection.
+    owner: omniseedos
+  - id: OS-002
+    principle: DETERMINISTIC_MUTATION
+    description: OmniSeed OS does not independently authorize engine mutations.
+    severity: critical
+    scope: [omniseedos]
+    deterministic: true
+    test: os-mutation-delegation
+    remediation: Forward the request and authorization to an OmniSeed operation.
+    owner: omniseedos
+  - id: OS-003
+    principle: INTERFACE_NEUTRALITY
+    description: OmniSeed OS actions resolve to engine operation IDs.
+    severity: high
+    scope: [omniseedos]
+    deterministic: true
+    test: os-operation-identity
+    remediation: Project registered engine operations instead of inventing OS-only actions.
+    owner: omniseedos
+  - id: CLIENT-001
+    principle: INTERFACE_NEUTRALITY
+    description: Equivalent actor permissions produce consistent operation availability across clients.
+    severity: high
+    scope: [omniseed, omniseedos]
+    deterministic: false
+    test: cross-client-operation-parity
+    remediation: Resolve availability once in OmniSeed and translate only presentation in clients.
+    owner: omniseed
+  - id: AGENT-001
+    principle: DETERMINISTIC_MUTATION
+    description: Semantic agents cannot directly mutate managed resources.
+    severity: critical
+    scope: [omniseed, omniseedos]
+    deterministic: true
+    test: no-agent-provider-bypass
+    remediation: Route agent requests through governed engine operations.
+    owner: omniseed
+  - id: AGENT-002
+    principle: GOVERNED_CONTRIBUTION
+    description: Agent-generated changes remain proposals until deterministic validation.
+    severity: critical
+    scope: [omniseed]
+    deterministic: false
+    test: proposal-lifecycle-review
+    remediation: Store agent output as a proposal with no direct mutation authority.
+    owner: omniseed
+  - id: PKG-001
+    principle: GOVERNANCE_IS_NOT_RUNTIME
+    description: Omniform, engine, and OS package compatibility is machine checked.
+    severity: high
+    scope: [omniform, omniseed, omniseedos]
+    deterministic: true
+    test: package-compatibility
+    remediation: Align package versions with compatibility/packages.yaml.
+    owner: omniseed-ecosystem
+  - id: DOC-001
+    principle: GOVERNANCE_IS_NOT_RUNTIME
+    description: Published ownership documentation matches executable dependency boundaries.
+    severity: medium
+    scope: [omniform, omniseed, omniseedos]
+    deterministic: true
+    test: ownership-documentation
+    remediation: Correct the documentation or dependency boundary so they agree.
+    owner: omniseed-ecosystem
+  - id: ID-001
+    principle: CAPABILITY_PRIMARY
+    description: Authoritative objects use stable IDs rather than display names.
+    severity: high
+    scope: [omniform, omniseed]
+    deterministic: true
+    test: stable-authority-ids
+    remediation: Add stable IDs and use names only for display.
+    owner: omniform
+  - id: EVID-001
+    principle: EVIDENCE_BEFORE_CLAIMS
+    description: Evidence references its source or provenance.
+    severity: critical
+    scope: [omniseed]
+    deterministic: true
+    test: evidence-provenance
+    remediation: Attach inspectable source and provenance data to evidence.
+    owner: omniseed
+  - id: EVID-002
+    principle: EVIDENCE_BEFORE_CLAIMS
+    description: Historical evidence is not silently rewritten.
+    severity: critical
+    scope: [omniseed]
+    deterministic: false
+    test: append-only-evidence-review
+    remediation: Append corrected or superseding evidence while retaining history.
+    owner: omniseed
+

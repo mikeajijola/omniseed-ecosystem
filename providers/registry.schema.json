@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://omniseed.org/schemas/provider-registry-v1.json",
+  "title": "OmniSeed Provider Registry",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["registryVersion", "providers"],
+  "properties": {
+    "registryVersion": { "const": "1" },
+    "providers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "package", "version", "manifest", "source"],
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "package": { "type": "string", "minLength": 1 },
+          "version": { "type": "string", "minLength": 1 },
+          "manifest": { "type": "string", "minLength": 1 },
+          "source": { "type": "string", "format": "uri" },
+          "deprecated": { "type": "boolean", "default": false }
+        }
+      }
+    }
+  }
+}
+

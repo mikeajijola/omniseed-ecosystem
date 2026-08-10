@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://omniseed.org/schemas/conformance-report-v1.json",
+  "title": "OmniSeed Ecosystem Conformance Report",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["ecosystemVersion", "generatedAt", "repositories", "summary", "findings"],
+  "properties": {
+    "ecosystemVersion": { "type": "string", "const": "1" },
+    "generatedAt": { "type": "string", "format": "date-time" },
+    "repositories": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["omniform", "omniseed", "omniseedos"],
+      "properties": {
+        "omniform": { "$ref": "#/$defs/repository" },
+        "omniseed": { "$ref": "#/$defs/repository" },
+        "omniseedos": { "$ref": "#/$defs/repository" }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["passed", "failed", "warnings", "notAutomated"],
+      "properties": {
+        "passed": { "type": "integer", "minimum": 0 },
+        "failed": { "type": "integer", "minimum": 0 },
+        "warnings": { "type": "integer", "minimum": 0 },
+        "notAutomated": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "findings": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/finding" }
+    }
+  },
+  "$defs": {
+    "repository": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["commit", "path"],
+      "properties": {
+        "commit": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
+        "path": { "type": "string", "minLength": 1 }
+      }
+    },
+    "finding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["invariant", "status", "severity", "repository", "evidence", "test"],
+      "properties": {
+        "invariant": { "type": "string", "pattern": "^[A-Z]+-[0-9]{3}$" },
+        "status": { "enum": ["passed", "failed", "warning", "not_automated"] },
+        "severity": { "enum": ["low", "medium", "high", "critical"] },
+        "repository": { "type": "string", "minLength": 1 },
+        "evidence": { "type": "string", "minLength": 1 },
+        "test": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}
+

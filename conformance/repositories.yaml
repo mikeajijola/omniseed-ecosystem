@@ -1,0 +1,6 @@
+version: 1
+repositories:
+  omniform: ./omniform
+  engine: ./omniseed
+  os: ./omniseedos
+

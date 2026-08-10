@@ -1,0 +1,37 @@
+{
+  "name": "@omniseed/conformance",
+  "version": "0.1.0",
+  "description": "Cross-repository constitutional governance and conformance for the OmniSeed ecosystem.",
+  "type": "module",
+  "bin": {
+    "omniseed-conformance": "./conformance/src/run.js"
+  },
+  "exports": {
+    ".": "./conformance/src/index.js",
+    "./schemas/conformance-report": "./conformance/schemas/conformance-report.schema.json",
+    "./schemas/provider-registry": "./providers/registry.schema.json",
+    "./schemas/provider-package": "./providers/provider-package.schema.json"
+  },
+  "scripts": {
+    "conformance": "node conformance/src/run.js",
+    "test": "node --test conformance/test/*.test.js",
+    "check": "npm test && npm run conformance -- --fail-on warning"
+  },
+  "dependencies": {
+    "ajv": "^8.17.1",
+    "ajv-formats": "^3.0.1",
+    "yaml": "^2.8.1"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "files": [
+    "constitution",
+    "conformance",
+    "compatibility",
+    "providers",
+    "docs",
+    "README.md",
+    "AGENTS.md"
+  ]
+}

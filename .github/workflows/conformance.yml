@@ -1,0 +1,60 @@
+name: Ecosystem conformance
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  conformance:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out governance repository
+        uses: actions/checkout@v4
+        with:
+          path: omniseed-ecosystem
+      - name: Check out Omniform
+        uses: actions/checkout@v4
+        with:
+          repository: mikeajijola/omniform
+          path: omniform
+      - name: Check out OmniSeed
+        uses: actions/checkout@v4
+        with:
+          repository: mikeajijola/omniseed
+          path: omniseed
+      - name: Check out OmniSeed OS
+        uses: actions/checkout@v4
+        with:
+          repository: mikeajijola/omniseedos
+          path: omniseedos
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: omniseed-ecosystem/package-lock.json
+      - name: Install governance dependencies
+        run: npm ci
+        working-directory: omniseed-ecosystem
+      - name: Test
+        run: npm test
+        working-directory: omniseed-ecosystem
+      - name: Run conformance
+        run: >-
+          npm run conformance --
+          --omniform ../omniform
+          --engine ../omniseed
+          --os ../omniseedos
+          --output reports/latest.json
+          --fail-on warning
+        working-directory: omniseed-ecosystem
+      - name: Upload conformance report
+        uses: actions/upload-artifact@v4
+        with:
+          name: conformance-report
+          path: omniseed-ecosystem/reports/latest.json
+

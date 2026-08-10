@@ -1,0 +1,70 @@
+version: 1
+repositories:
+  omniform:
+    owns:
+      - portable_desired_state
+      - capabilities
+      - requirements
+      - outcomes
+      - provider_preferences
+      - desired_resources
+      - operation_declarations
+      - autonomy_constraints
+    doesNotOwn:
+      - runtime_provider_status
+      - credentials
+      - provider_sdk_calls
+      - installed_provider_state
+      - runtime_evidence
+      - deployed_state
+      - os_navigation
+      - reconciliation
+  omniseed:
+    owns:
+      - runtime_truth
+      - provider_registration
+      - provider_loading
+      - capability_resolution
+      - plans
+      - approvals
+      - controlled_apply
+      - reconciliation
+      - observations
+      - evidence
+      - provenance
+      - proposal_evaluation
+      - provider_discovery_mediation
+    doesNotOwn:
+      - portable_desired_schema
+      - os_navigation
+      - client_specific_business_logic
+  omniseedos:
+    owns:
+      - projection
+      - navigation
+      - interaction
+      - visualization
+      - http_transport
+      - conversational_entry_points
+      - operation_rendering
+      - proposal_interfaces
+    doesNotOwn:
+      - portable_desired_schema
+      - authoritative_runtime_state
+      - provider_resolution
+      - mutation_authorization
+      - reconciliation
+  omniseed-ecosystem:
+    owns:
+      - architectural_constitution
+      - invariant_catalogue
+      - ecosystem_conformance
+      - compatibility_catalogue
+      - provider_package_protocol
+      - conformance_reports
+    doesNotOwn:
+      - runtime_product_behavior
+      - company_runtime_state
+      - provider_installation
+      - managed_mutation
+

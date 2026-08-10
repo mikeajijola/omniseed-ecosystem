@@ -1,0 +1,37 @@
+version: 1
+principles:
+  - id: CAPABILITY_PRIMARY
+    statement: >
+      Capability is the stable unit of intent. Actors, providers,
+      implementations, resources, and interfaces are replaceable.
+  - id: STATE_SEPARATION
+    statement: >
+      Desired, deployed, observed, and evidential state remain distinct.
+  - id: DETERMINISTIC_MUTATION
+    statement: >
+      Semantic systems may propose changes, but managed mutation passes through
+      the deterministic plan, approval, apply, observation, and persistence lifecycle.
+  - id: INTERFACE_NEUTRALITY
+    statement: >
+      UI, API, CLI, AI, and machine interfaces project shared operations instead
+      of implementing independent capability logic.
+  - id: PROVIDER_TRUTH
+    statement: >
+      Desired, discovered, installed, configured, connected, healthy, and capable
+      provider states are distinct.
+  - id: PORTABLE_SEMANTICS_ONLY
+    statement: >
+      Omniform contains only portable desired semantics.
+  - id: EVIDENCE_BEFORE_CLAIMS
+    statement: >
+      Runtime claims are supported by observations and history-aware evidence
+      with inspectable provenance.
+  - id: GOVERNED_CONTRIBUTION
+    statement: >
+      Human and machine actors may propose changes, but a proposal is not desired
+      state and grants no authority to mutate.
+  - id: GOVERNANCE_IS_NOT_RUNTIME
+    statement: >
+      Ecosystem conformance observes and reports on the products but is not a
+      runtime dependency of them.
+
