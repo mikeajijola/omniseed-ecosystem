@@ -1,13 +1,13 @@
 {
   "ecosystemVersion": "1",
-  "generatedAt": "2026-08-10T14:32:56.001Z",
+  "generatedAt": "2026-08-10T18:32:39.587Z",
   "repositories": {
     "omniform": {
       "commit": "9634d144b4da56a53397baa813f13f07856771f5",
       "path": "omniform"
     },
     "omniseed": {
-      "commit": "45199a945ebc90a83b1177588672422fa7587f06",
+      "commit": "5861da9461aaa3f276c06b83bec6b789eb6c49d9",
       "path": "omniseed"
     },
     "omniseedos": {
@@ -16,7 +16,7 @@
     }
   },
   "summary": {
-    "passed": 20,
+    "passed": 22,
     "failed": 0,
     "warnings": 0,
     "notAutomated": 4
@@ -125,6 +125,22 @@
       "repository": "omniseed",
       "evidence": "Provider evidence records source, resource identity, and observation time.",
       "test": "evidence-provenance"
+    },
+    {
+      "invariant": "ENGINE-008",
+      "status": "passed",
+      "severity": "critical",
+      "repository": "omniseed",
+      "evidence": "ProviderRegistry normalizes in-process and protocol Providers; core lifecycle code contains no implementation-language or transport branching.",
+      "test": "language-independent-provider-boundary"
+    },
+    {
+      "invariant": "ENGINE-009",
+      "status": "passed",
+      "severity": "critical",
+      "repository": "omniseed",
+      "evidence": "Python reference Provider passed the real inspect, resolve, plan, approve, apply, observe, persist, recompile, reconcile, invoke, and shutdown lifecycle test.",
+      "test": "external-provider-lifecycle"
     },
     {
       "invariant": "OS-001",
