@@ -110,8 +110,10 @@ async function governedCompanyChange({ repositories }) {
   const companyChange = await repositories.omniseed.read("src/company-change.js"), tests = await repositories.omniseed.read("test/company-change.test.js");
   const required = [
     [engine, "company_change.propose", "proposal authority"],
-    [engine, "company_change.approve", "approval authority"],
-    [engine, "company_change.apply", "apply authority"],
+    [companyChange, "company_change.approve", "baseline approval authority"],
+    [companyChange, "company_change.apply", "baseline apply authority"],
+    [engine, "proposal.requiredAuthority.approve", "proposal-specific approval authority"],
+    [engine, "proposal.requiredAuthority.apply", "proposal-specific apply authority"],
     [engine, "canonicalDefinition: candidate", "canonical definition persistence"],
     [companyChange, "verifyCompanyChangeProposal", "exact proposal hashing"],
     [companyChange, "assertOmniform(candidate)", "candidate Omniform validation"],
