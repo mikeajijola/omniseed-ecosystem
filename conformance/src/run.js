@@ -5,10 +5,10 @@ const args = process.argv.slice(2);
 const options = {};
 for (let index = 0; index < args.length; index += 1) {
   const name = args[index];
-  if (!["--omniform", "--engine", "--os", "--output", "--fail-on"].includes(name)) usage(`Unknown option: ${name}`);
+  if (!["--omniform", "--engine", "--os", "--github-provider", "--output", "--fail-on"].includes(name)) usage(`Unknown option: ${name}`);
   const value = args[index + 1];
   if (!value || value.startsWith("--")) usage(`Missing value for ${name}`);
-  options[name.slice(2).replace("fail-on", "failOn")] = value;
+  options[name.slice(2).replace("fail-on", "failOn").replace("github-provider", "githubProvider")] = value;
   index += 1;
 }
 
@@ -27,7 +27,6 @@ try {
 
 function usage(message) {
   console.error(message);
-  console.error("Usage: omniseed-conformance [--omniform path] [--engine path] [--os path] [--output path] [--fail-on failed|warning]");
+  console.error("Usage: omniseed-conformance [--omniform path] [--engine path] [--os path] [--github-provider path] [--output path] [--fail-on failed|warning]");
   process.exit(2);
 }
-

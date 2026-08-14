@@ -13,7 +13,8 @@ export async function runConformance(options = {}) {
   const roots = {
     omniform: resolve(options.omniform ?? defaultRepository("omniform")),
     omniseed: resolve(options.engine ?? defaultRepository("omniseed")),
-    omniseedos: resolve(options.os ?? defaultRepository("omniseedos"))
+    omniseedos: resolve(options.os ?? defaultRepository("omniseedos")),
+    ...(providerRepository(options.githubProvider) ? { githubProvider: providerRepository(options.githubProvider) } : {})
   };
   const catalogue = parse(await readFile(join(root, "constitution/invariants.yaml"), "utf8"));
   const compatibility = parse(await readFile(join(root, "compatibility/packages.yaml"), "utf8"));
@@ -41,11 +42,7 @@ export async function runConformance(options = {}) {
   const report = {
     ecosystemVersion: String(catalogue.version),
     generatedAt: new Date().toISOString(),
-    repositories: {
-      omniform: repositoryRecord(roots.omniform, root),
-      omniseed: repositoryRecord(roots.omniseed, root),
-      omniseedos: repositoryRecord(roots.omniseedos, root)
-    },
+    repositories: Object.fromEntries(Object.entries(roots).map(([name, path]) => [name, repositoryRecord(path, root)])),
     summary: {
       passed: findings.filter(item => item.status === "passed").length,
       failed: findings.filter(item => item.status === "failed").length,
@@ -66,6 +63,12 @@ export async function runConformance(options = {}) {
 function defaultRepository(name) {
   const nested = join(root, name);
   return existsSync(nested) ? nested : resolve(root, "..", name);
+}
+
+function providerRepository(explicit) {
+  if (explicit) return resolve(explicit);
+  const candidate = resolve(root, "..", "omniseed-provider-github");
+  return existsSync(candidate) ? candidate : null;
 }
 
 async function buildContext(roots, compatibility) {

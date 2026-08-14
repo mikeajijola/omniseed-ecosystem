@@ -15,7 +15,7 @@ test("current ecosystem emits a valid report with no deterministic failures", as
   assert.equal(report.summary.failed, 0);
   assert.ok(report.summary.passed >= 15);
   assert.ok(report.summary.notAutomated >= 1);
-  assert.equal(report.findings.length, 26);
+  assert.equal(report.findings.length, 28);
 });
 
 test("reverse runtime dependency fails ARCH-001 with inspectable evidence", async () => {
@@ -42,4 +42,31 @@ test("every catalogue ID is unique and every deterministic test is registered", 
   const ids = catalogue.invariants.map(item => item.id);
   assert.equal(new Set(ids).size, ids.length);
   catalogue.invariants.filter(item => item.deterministic).forEach(item => assert.equal(typeof ruleTests[item.test], "function", `${item.id} has no test`));
+});
+
+test("missing exact governed Company Change boundary fails ENGINE-010", async () => {
+  const fixture = await mkdtemp(join(tmpdir(), "omniseed-company-change-conformance-"));
+  const engine = join(fixture, "omniseed");
+  await cp(join(products, "omniseed"), engine, { recursive: true, filter: source => !source.includes("/.git") && !source.includes("/node_modules") });
+  const companyChangePath = join(engine, "src/engine.js");
+  await writeFile(companyChangePath, (await readFile(companyChangePath, "utf8")).replaceAll("company_change_stale", "removed_stale_guard"));
+  execFileSync("git", ["init", "-q", engine]);
+  execFileSync("git", ["-C", engine, "add", "."]);
+  execFileSync("git", ["-C", engine, "-c", "user.name=Conformance Test", "-c", "user.email=test@example.invalid", "commit", "-qm", "fixture"]);
+  const report = await runConformance({ engine, output: false });
+  const finding = report.findings.find(item => item.invariant === "ENGINE-010");
+  assert.equal(finding.status, "failed");
+  assert.match(finding.evidence, /stale/i);
+});
+
+test("missing GitHub Provider manifest fails PROVIDER-001", async () => {
+  const fixture = await mkdtemp(join(tmpdir(), "omniseed-provider-conformance-"));
+  await writeFile(join(fixture, "package.json"), JSON.stringify({ name: "fixture-provider", version: "0.0.0" }));
+  execFileSync("git", ["init", "-q", fixture]);
+  execFileSync("git", ["-C", fixture, "add", "."]);
+  execFileSync("git", ["-C", fixture, "-c", "user.name=Conformance Test", "-c", "user.email=test@example.invalid", "commit", "-qm", "fixture"]);
+  const report = await runConformance({ githubProvider: fixture, output: false });
+  const finding = report.findings.find(item => item.invariant === "PROVIDER-001");
+  assert.equal(finding.status, "failed");
+  assert.match(finding.evidence, /manifest/i);
 });

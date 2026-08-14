@@ -27,3 +27,8 @@ finding
 
 Principle and invariant changes are governed changes themselves. Permanent invariant IDs make reports and history comparable over time.
 
+## Two governed loops
+
+A Realisation Plan changes reality to match the company definition. A Company Change Proposal proposes changing the company definition itself.
+
+Semantic systems such as Lily may recommend either path and cite evidence. They do not directly mutate canonical company truth or Provider state. OmniSeed validates and governs the exact proposal; applying it recompiles desired state, after which the existing realisation loop detects and handles new gaps.

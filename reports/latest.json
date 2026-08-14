@@ -1,22 +1,26 @@
 {
   "ecosystemVersion": "1",
-  "generatedAt": "2026-08-10T18:32:39.587Z",
+  "generatedAt": "2026-08-14T12:13:26.422Z",
   "repositories": {
     "omniform": {
-      "commit": "9634d144b4da56a53397baa813f13f07856771f5",
+      "commit": "43a66507eff70571bb2764d525a615633b97d542",
       "path": "omniform"
     },
     "omniseed": {
-      "commit": "5861da9461aaa3f276c06b83bec6b789eb6c49d9",
+      "commit": "171ffd5afa0cd56c56d67ea400a92f9d455a2ac6",
       "path": "omniseed"
     },
     "omniseedos": {
       "commit": "4a2c74b8522498d6080865889d15a1635e9a761e",
       "path": "omniseedos"
+    },
+    "githubProvider": {
+      "commit": "7870f67c97f9ff6b1fee52c8bfeaac8bd38fb2be",
+      "path": "../omniseed-provider-github"
     }
   },
   "summary": {
-    "passed": 22,
+    "passed": 24,
     "failed": 0,
     "warnings": 0,
     "notAutomated": 4
@@ -143,6 +147,14 @@
       "test": "external-provider-lifecycle"
     },
     {
+      "invariant": "ENGINE-010",
+      "status": "passed",
+      "severity": "critical",
+      "repository": "omniseed",
+      "evidence": "Company changes are evidence-backed exact proposals, separately authorized and approved, validated against Omniform, stale-protected, and tested apart from realisation.",
+      "test": "governed-company-change"
+    },
+    {
       "invariant": "OS-001",
       "status": "passed",
       "severity": "critical",
@@ -229,6 +241,14 @@
       "repository": "omniseed",
       "evidence": "This invariant requires semantic or future behavioral review.",
       "test": "append-only-evidence-review"
+    },
+    {
+      "invariant": "PROVIDER-001",
+      "status": "passed",
+      "severity": "high",
+      "repository": "githubProvider",
+      "evidence": "GitHub Provider manifest validates, its configuration schema exists, and its static ID/operation claims match the implementation without asserting live status.",
+      "test": "github-provider-manifest"
     }
   ]
 }

@@ -1,6 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { execFileSync } from "node:child_process";
+import Ajv2020 from "ajv/dist/2020.js";
 
 const pass = evidence => ({ status: "passed", evidence });
 const fail = (repository, evidence) => ({ status: "failed", repository, evidence });
@@ -20,13 +21,15 @@ export const ruleTests = {
   "evidence-provenance": evidenceProvenance,
   "language-independent-provider-boundary": languageIndependentProviderBoundary,
   "external-provider-lifecycle": externalProviderLifecycle,
+  "governed-company-change": governedCompanyChange,
   "os-authority-boundary": osAuthorityBoundary,
   "os-mutation-delegation": osMutationDelegation,
   "os-operation-identity": osOperationIdentity,
   "no-agent-provider-bypass": noAgentProviderBypass,
   "package-compatibility": packageCompatibility,
   "ownership-documentation": ownershipDocumentation,
-  "stable-authority-ids": stableAuthorityIds
+  "stable-authority-ids": stableAuthorityIds,
+  "github-provider-manifest": githubProviderManifest
 };
 
 async function dependencyDirection({ repositories }) {
@@ -95,9 +98,32 @@ async function exactPersistedPlan({ repositories }) {
 
 async function stalePlanProtection({ repositories }) {
   const engine = await repositories.omniseed.read("src/engine.js");
-  const expected = ["state.version !== plan.stateVersion", "definitionHash(declaration) !== plan.definitionHash", 'EngineError("plan_stale"'];
+  const expected = ["state.version !== plan.stateVersion", 'EngineError("plan_stale"'];
   const missing = expected.filter(text => !engine.includes(text));
+  if (!engine.includes("definitionHash(active) !== plan.definitionHash") && !engine.includes("definitionHash(declaration) !== plan.definitionHash")) missing.push("definition hash comparison");
   return missing.length ? fail("omniseed", `Stale-plan checks missing: ${missing.join(", ")}`) : pass("Apply rejects both state-version and declaration drift as plan_stale.");
+}
+
+async function governedCompanyChange({ repositories }) {
+  const engine = await repositories.omniseed.read("src/engine.js");
+  if (!repositories.omniseed.files.includes("src/company-change.js") || !repositories.omniseed.files.includes("test/company-change.test.js")) return fail("omniseed", "Governed Company Change implementation or tests are missing, including exact stale-definition protection.");
+  const companyChange = await repositories.omniseed.read("src/company-change.js"), tests = await repositories.omniseed.read("test/company-change.test.js");
+  const required = [
+    [engine, "company_change.propose", "proposal authority"],
+    [companyChange, "company_change.approve", "baseline approval authority"],
+    [companyChange, "company_change.apply", "baseline apply authority"],
+    [engine, "proposal.requiredAuthority.approve", "proposal-specific approval authority"],
+    [engine, "proposal.requiredAuthority.apply", "proposal-specific apply authority"],
+    [engine, "canonicalDefinition: candidate", "canonical definition persistence"],
+    [companyChange, "verifyCompanyChangeProposal", "exact proposal hashing"],
+    [companyChange, "assertOmniform(candidate)", "candidate Omniform validation"],
+    [companyChange, "evidence_not_found", "evidence reference validation"],
+    [engine, "company_change_stale", "stale definition protection"],
+    [tests, "does not fabricate realisation", "definition/realisation boundary test"],
+    [tests, "future governance", "current-policy recursion test"]
+  ];
+  const missing = required.filter(([source, marker]) => !source.includes(marker)).map(([, , description]) => description);
+  return missing.length ? fail("omniseed", `Governed Company Change markers missing: ${missing.join(", ")}`) : pass("Company changes are evidence-backed exact proposals, separately authorized and approved, validated against Omniform, stale-protected, and tested apart from realisation.");
 }
 
 async function explicitProviderRegistration({ repositories }) {
@@ -226,6 +252,21 @@ async function stableAuthorityIds({ repositories }) {
   const operationRequired = schema.$defs?.operation?.required ?? [];
   if (!id?.pattern || !capabilityRequired.includes("id") || !operationRequired.includes("id")) return fail("omniform", "Stable ID constraints are missing for authoritative Capability or operation objects.");
   return pass("Omniform defines stable ID syntax and requires IDs for Capabilities and operations.");
+}
+
+async function githubProviderManifest({ root, repositories }) {
+  const repository = repositories.githubProvider;
+  if (!repository) return { status: "warning", repository: "githubProvider", evidence: "GitHub Provider repository is not present; pass --github-provider to inspect it." };
+  let manifest;
+  try { manifest = JSON.parse(await repository.read("provider-package.json")); }
+  catch (error) { return fail("githubProvider", `Provider manifest is missing or invalid JSON: ${error.message}`); }
+  const schema = JSON.parse(await readFile(join(root, "providers/provider-package.schema.json"), "utf8"));
+  const validate = new Ajv2020({ allErrors: true, strict: true }).compile(schema);
+  if (!validate(manifest)) return fail("githubProvider", `Provider manifest does not match the ecosystem schema: ${validate.errors.map(item => `${item.instancePath || "$"} ${item.message}`).join("; ")}`);
+  if (!repository.files.includes(manifest.configurationSchema.replace(/^\.\//, ""))) return fail("githubProvider", `Provider manifest references missing configuration schema ${manifest.configurationSchema}`);
+  const implementation = await repository.read("provider/github_provider.py");
+  const missing = [manifest.id, ...manifest.operations].filter(value => !implementation.includes(value));
+  return missing.length ? fail("githubProvider", `Manifest claims are absent from implementation: ${missing.join(", ")}`) : pass("GitHub Provider manifest validates, its configuration schema exists, and its static ID/operation claims match the implementation without asserting live status.");
 }
 
 function allDependencies(manifest) {
