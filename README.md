@@ -10,6 +10,8 @@ Company as Code means a company can run from its definition. That idea only work
 
 This repository is the shared rulebook and test bench. It is not a fourth runtime layer. None of the three products depend on it while running.
 
+The rulebook covers both governed loops: realisation plans change reality to match Omniform, while Company Change Proposals change canonical desired Omniform before the ordinary realisation loop runs again. `ENGINE-010` protects the exact proposal, validation, approval, evidence, and staleness boundary.
+
 ## What lives here
 
 - `constitution/` contains human- and machine-readable principles, invariants, and ownership boundaries.

@@ -15,7 +15,8 @@
       "properties": {
         "omniform": { "$ref": "#/$defs/repository" },
         "omniseed": { "$ref": "#/$defs/repository" },
-        "omniseedos": { "$ref": "#/$defs/repository" }
+        "omniseedos": { "$ref": "#/$defs/repository" },
+        "githubProvider": { "$ref": "#/$defs/repository" }
       }
     },
     "summary": {
@@ -59,4 +60,3 @@
     }
   }
 }
-

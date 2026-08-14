@@ -3,4 +3,4 @@ repositories:
   omniform: ./omniform
   engine: ./omniseed
   os: ./omniseedos
-
+  github_provider: ../omniseed-provider-github

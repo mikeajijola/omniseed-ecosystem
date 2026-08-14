@@ -135,6 +135,15 @@ invariants:
     test: external-provider-lifecycle
     remediation: Restore the external reference Provider and its inspect, plan, approve, apply, observe, persist, recompile, and reconcile test.
     owner: omniseed
+  - id: ENGINE-010
+    principle: DETERMINISTIC_MUTATION
+    description: Company definition changes remain exact persisted proposals with separate authority, approval, validation, and stale-definition protection.
+    severity: critical
+    scope: [omniseed]
+    deterministic: true
+    test: governed-company-change
+    remediation: Restore proposal hashing, evidence provenance, candidate Omniform validation, exact approval, and company_change_stale rejection before canonical definition mutation.
+    owner: omniseed
   - id: OS-001
     principle: INTERFACE_NEUTRALITY
     description: OmniSeed OS does not independently calculate authoritative capability status.
@@ -234,3 +243,12 @@ invariants:
     test: append-only-evidence-review
     remediation: Append corrected or superseding evidence while retaining history.
     owner: omniseed
+  - id: PROVIDER-001
+    principle: PROVIDER_TRUTH
+    description: The GitHub Provider publishes a valid static capability manifest without claiming live installation or health.
+    severity: high
+    scope: [githubProvider]
+    deterministic: true
+    test: github-provider-manifest
+    remediation: Restore a schema-valid provider-package.json and referenced configuration schema whose claims match the implementation.
+    owner: omniseed-provider-github
