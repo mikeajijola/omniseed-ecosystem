@@ -98,13 +98,16 @@ async function exactPersistedPlan({ repositories }) {
 
 async function stalePlanProtection({ repositories }) {
   const engine = await repositories.omniseed.read("src/engine.js");
-  const expected = ["state.version !== plan.stateVersion", "definitionHash(active) !== plan.definitionHash", 'EngineError("plan_stale"'];
+  const expected = ["state.version !== plan.stateVersion", 'EngineError("plan_stale"'];
   const missing = expected.filter(text => !engine.includes(text));
+  if (!engine.includes("definitionHash(active) !== plan.definitionHash") && !engine.includes("definitionHash(declaration) !== plan.definitionHash")) missing.push("definition hash comparison");
   return missing.length ? fail("omniseed", `Stale-plan checks missing: ${missing.join(", ")}`) : pass("Apply rejects both state-version and declaration drift as plan_stale.");
 }
 
 async function governedCompanyChange({ repositories }) {
-  const engine = await repositories.omniseed.read("src/engine.js"), companyChange = await repositories.omniseed.read("src/company-change.js"), tests = await repositories.omniseed.read("test/company-change.test.js");
+  const engine = await repositories.omniseed.read("src/engine.js");
+  if (!repositories.omniseed.files.includes("src/company-change.js") || !repositories.omniseed.files.includes("test/company-change.test.js")) return fail("omniseed", "Governed Company Change implementation or tests are missing, including exact stale-definition protection.");
+  const companyChange = await repositories.omniseed.read("src/company-change.js"), tests = await repositories.omniseed.read("test/company-change.test.js");
   const required = [
     [engine, "company_change.propose", "proposal authority"],
     [engine, "company_change.approve", "approval authority"],
