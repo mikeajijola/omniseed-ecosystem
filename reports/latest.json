@@ -1,21 +1,21 @@
 {
   "ecosystemVersion": "1",
-  "generatedAt": "2026-08-14T10:59:10.239Z",
+  "generatedAt": "2026-08-14T12:13:26.422Z",
   "repositories": {
     "omniform": {
-      "commit": "af2e8883ac7e60cade4476bb91cb50284a25c024",
+      "commit": "43a66507eff70571bb2764d525a615633b97d542",
       "path": "omniform"
     },
     "omniseed": {
-      "commit": "c07dbdfa5545864e052d9f3bb3207b2308ea5d96",
+      "commit": "171ffd5afa0cd56c56d67ea400a92f9d455a2ac6",
       "path": "omniseed"
     },
     "omniseedos": {
-      "commit": "2ffc39772aff1e86be7cf2b77e92fa99d33d96e3",
+      "commit": "4a2c74b8522498d6080865889d15a1635e9a761e",
       "path": "omniseedos"
     },
     "githubProvider": {
-      "commit": "087c060c8abfe0f242b79aba4e5333636b442dd8",
+      "commit": "7870f67c97f9ff6b1fee52c8bfeaac8bd38fb2be",
       "path": "../omniseed-provider-github"
     }
   },
