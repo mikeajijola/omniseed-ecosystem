@@ -16,3 +16,23 @@ These states never collapse into one boolean. A Provider may be requested in Omn
 
 Provider test tooling will validate manifest honesty, family and operation boundaries, plan purity, apply context, evidence provenance, company isolation, and failure behavior.
 
+## Start from the primitive responsibility
+
+Ask: “Which existing primitive family does this implementation truthfully realise?” Do not begin with a vendor feature catalogue. A package may support one or many families, but every family is independently selected by the company and every claim needs implementation evidence.
+
+For each advertised family, document:
+
+- Primitive family
+- Semantic responsibility
+- Provider implementation
+- Authority/authentication
+- Plan behaviour
+- Apply behaviour
+- Observe behaviour
+- Evidence produced
+- Persistent state recorded
+- Failure/drift behaviour
+
+If those answers are not clean and testable, do not advertise the family. Start narrow. Vendor APIs, persistent external objects, and general usefulness do not create primitive families.
+
+The canonical families are `agents`, `skills`, `connectors`, `workflows`, `schedules`, `policies`, `observations`, `memory`, `identity`, and `machines`. New manifests using the removed alpha families `systems` or `company_search` fail conformance. Historical evidence keeps its recorded vocabulary for auditability.

@@ -54,6 +54,51 @@ invariants:
     test: semantic-portability-review
     remediation: Test the idea across unrelated domains or keep it in Provider or resource spec.
     owner: omniform
+  - id: PRIM-001
+    principle: PORTABLE_SEMANTICS_ONLY
+    description: New desired declarations and Provider manifests use exactly the canonical primitive-family vocabulary; systems and company_search are rejected rather than silently remapped.
+    severity: critical
+    scope: [omniform, githubProvider]
+    deterministic: true
+    test: canonical-primitive-vocabulary
+    remediation: Use agents, skills, connectors, workflows, schedules, policies, observations, memory, identity, or machines and document manual migration of obsolete families.
+    owner: omniseed-ecosystem
+  - id: PRIM-002
+    principle: PROVIDER_TRUTH
+    description: A Provider advertises only primitive families whose semantic responsibility its plan, apply, observe, evidence, state, and drift behavior truthfully realise.
+    severity: critical
+    scope: [githubProvider]
+    deterministic: false
+    test: provider-family-semantic-review
+    remediation: Remove unproven family claims and keep the Provider narrow until implementation evidence exists.
+    owner: omniseed-provider-github
+  - id: PRIM-003
+    principle: STATE_SEPARATION
+    description: Persistence alone does not justify primitive status; concrete external objects remain deployed and observed state associated with a real primitive realisation.
+    severity: critical
+    scope: [omniform, omniseed]
+    deterministic: false
+    test: persistence-semantic-review
+    remediation: Keep concrete identifiers and persistent external facts in Provider spec, deployed state, observations, and evidence rather than inventing a catch-all family.
+    owner: omniseed
+  - id: PRIM-004
+    principle: PROVIDER_TRUTH
+    description: A Provider package may support multiple primitive families while company Provider selection remains independently configurable per family.
+    severity: critical
+    scope: [omniform, omniseed]
+    deterministic: true
+    test: independent-provider-selection
+    remediation: Preserve the family-keyed Provider map and do not bind all families to one package-level selection.
+    owner: omniform
+  - id: AGENT-003
+    principle: CAPABILITY_PRIMARY
+    description: Agent means governed agency, not AI; people, AI systems, software, services, teams, organisations, or other governed actors may realise an agents requirement.
+    severity: high
+    scope: [omniform, omniseed]
+    deterministic: false
+    test: actor-neutral-agency-review
+    remediation: Keep implementation actor types in resource spec and do not add human- or AI-specific primitive families.
+    owner: omniform
   - id: ENGINE-001
     principle: DETERMINISTIC_MUTATION
     description: Controlled mutation routes through plan, approve, and apply.

@@ -29,8 +29,12 @@ export const ruleTests = {
   "package-compatibility": packageCompatibility,
   "ownership-documentation": ownershipDocumentation,
   "stable-authority-ids": stableAuthorityIds,
-  "github-provider-manifest": githubProviderManifest
+  "github-provider-manifest": githubProviderManifest,
+  "canonical-primitive-vocabulary": canonicalPrimitiveVocabulary,
+  "independent-provider-selection": independentProviderSelection
 };
+
+const canonicalPrimitiveFamilies = ["agents", "skills", "connectors", "workflows", "schedules", "policies", "observations", "memory", "identity", "machines"];
 
 async function dependencyDirection({ repositories }) {
   const forbidden = {
@@ -267,6 +271,30 @@ async function githubProviderManifest({ root, repositories }) {
   const implementation = await repository.read("provider/github_provider.py");
   const missing = [manifest.id, ...manifest.operations].filter(value => !implementation.includes(value));
   return missing.length ? fail("githubProvider", `Manifest claims are absent from implementation: ${missing.join(", ")}`) : pass("GitHub Provider manifest validates, its configuration schema exists, and its static ID/operation claims match the implementation without asserting live status.");
+}
+
+async function canonicalPrimitiveVocabulary({ root, repositories }) {
+  const formSchema = JSON.parse(await repositories.omniform.read("schema/omniform.schema.json"));
+  const providerSchema = JSON.parse(await readFile(join(root, "providers/provider-package.schema.json"), "utf8"));
+  const formFamilies = formSchema.$defs?.primitiveFamily?.enum;
+  const manifestFamilies = providerSchema.properties?.primitiveFamilies?.items?.enum;
+  if (JSON.stringify(formFamilies) !== JSON.stringify(canonicalPrimitiveFamilies)) return fail("omniform", `Omniform primitive families differ from the canonical ten: ${JSON.stringify(formFamilies)}`);
+  if (JSON.stringify(manifestFamilies) !== JSON.stringify(canonicalPrimitiveFamilies)) return fail("omniseed-ecosystem", `Provider manifest vocabulary differs from the canonical ten: ${JSON.stringify(manifestFamilies)}`);
+  if (repositories.githubProvider) {
+    const manifest = JSON.parse(await repositories.githubProvider.read("provider-package.json"));
+    const obsolete = manifest.primitiveFamilies.filter(family => !canonicalPrimitiveFamilies.includes(family));
+    if (obsolete.length) return fail("githubProvider", `Provider advertises removed or unknown primitive families: ${obsolete.join(", ")}`);
+  }
+  return pass("Omniform and Provider contracts expose exactly the ten canonical primitive families and the GitHub Provider advertises only retained families.");
+}
+
+async function independentProviderSelection({ repositories }) {
+  const schema = JSON.parse(await repositories.omniform.read("schema/omniform.schema.json"));
+  const providerKeys = Object.keys(schema.$defs?.providerMap?.properties ?? {});
+  if (JSON.stringify(providerKeys) !== JSON.stringify(canonicalPrimitiveFamilies)) return fail("omniform", "Provider selection is not independently keyed by every canonical primitive family.");
+  const example = await repositories.omniform.read("examples/omniseed/omniform.yaml");
+  const distinctSelections = [...example.matchAll(/provider:\s*([a-z][a-z0-9_]*)/g)].map(match => match[1]);
+  return new Set(distinctSelections).size >= 3 ? pass("The schema selects Providers per family and the software-development fixture composes independently selected implementations.") : fail("omniform", "The canonical composition fixture does not demonstrate independent Provider selection.");
 }
 
 function allDependencies(manifest) {

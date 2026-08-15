@@ -27,6 +27,14 @@ finding
 
 Principle and invariant changes are governed changes themselves. Permanent invariant IDs make reports and history comparable over time.
 
+## Primitive-family architecture
+
+Capabilities express company intent. Primitive requirements express the fundamental company building blocks that must be manifested. Providers are replaceable ways to realise those families. Deployed state records what concretely exists; observations and evidence establish what reality says; reconciliation closes the gap.
+
+The canonical manifestation vocabulary is `agents`, `skills`, `connectors`, `workflows`, `schedules`, `policies`, `observations`, `memory`, `identity`, and `machines`. Provider selection is independent per family even when one package implements several. Capabilities compose primitives and never bind directly to vendors.
+
+`systems` and `company_search` are removed alpha ontology, not aliases. Persistence belongs to state and does not justify a catch-all primitive. Search remains ordinary replaceable retrieval functionality composed from operations and appropriate primitives. Agent means agency and does not privilege AI: people, software, services, teams, organisations, machines with agency, and AI systems may all be governed realisations.
+
 ## Two governed loops
 
 A Realisation Plan changes reality to match the company definition. A Company Change Proposal proposes changing the company definition itself.
