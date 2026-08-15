@@ -89,14 +89,18 @@ test("removed Provider primitive family fails PRIM-001", async () => {
 
 test("hard-coded Company Search family selection fails CAP-003", async () => {
   const fixture = await mkdtemp(join(tmpdir(), "omniseed-company-search-conformance-"));
-  const engine = join(fixture, "omniseed");
+  const engine = join(fixture, "omniseed"), form = join(fixture, "omniform");
   await cp(join(products, "omniseed"), engine, { recursive: true, filter: source => !source.includes("/.git") && !source.includes("/node_modules") });
+  await cp(join(products, "omniform"), form, { recursive: true, filter: source => !source.includes("/.git") && !source.includes("/node_modules") });
   const enginePath = join(engine, "src/engine.js");
   await writeFile(enginePath, `${await readFile(enginePath, "utf8")}\n// regression fixture: spec.providers.memory\n`);
-  execFileSync("git", ["init", "-q", engine]);
-  execFileSync("git", ["-C", engine, "add", "."]);
-  execFileSync("git", ["-C", engine, "-c", "user.name=Conformance Test", "-c", "user.email=test@example.invalid", "commit", "-qm", "fixture"]);
-  const report = await runConformance({ engine, output: false });
+  await writeFile(join(form, "examples/company.omniform.json"), JSON.stringify({ spec: { capabilities: [{ id: "company_search" }], operations: [{ id: "search_company", capability: "company_search" }] } }));
+  for (const repository of [engine, form]) {
+    execFileSync("git", ["init", "-q", repository]);
+    execFileSync("git", ["-C", repository, "add", "."]);
+    execFileSync("git", ["-C", repository, "-c", "user.name=Conformance Test", "-c", "user.email=test@example.invalid", "commit", "-qm", "fixture"]);
+  }
+  const report = await runConformance({ omniform: form, engine, output: false });
   const finding = report.findings.find(item => item.invariant === "CAP-003");
   assert.equal(finding.status, "failed");
   assert.match(finding.evidence, /hard-coded memory or skills Provider selection/i);
