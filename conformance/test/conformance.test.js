@@ -10,7 +10,8 @@ import Ajv2020 from "ajv/dist/2020.js";
 
 const workspace = resolve(new URL("../..", import.meta.url).pathname);
 const products = existsSync(join(workspace, "omniform")) ? workspace : resolve(workspace, "..");
-const canonicalCompany = resolve(process.env.OMNISEED_COMPANY_REPOSITORY ?? join(products, "..", "omniseed-ecosystem-company"));
+const defaultCompany = existsSync(join(products, "omniseed-ecosystem-company")) ? join(products, "omniseed-ecosystem-company") : join(products, "..", "omniseed-ecosystem-company");
+const canonicalCompany = resolve(process.env.OMNISEED_COMPANY_REPOSITORY ?? defaultCompany);
 const githubProvider = existsSync(join(products, "provider-github")) ? join(products, "provider-github") : join(products, "omniseed-provider-github");
 
 test("current ecosystem emits a valid report with no deterministic failures", async () => {
