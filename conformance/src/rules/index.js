@@ -31,7 +31,8 @@ export const ruleTests = {
   "stable-authority-ids": stableAuthorityIds,
   "github-provider-manifest": githubProviderManifest,
   "canonical-primitive-vocabulary": canonicalPrimitiveVocabulary,
-  "independent-provider-selection": independentProviderSelection
+  "independent-provider-selection": independentProviderSelection,
+  "company-search-capability-boundary": companySearchCapabilityBoundary
 };
 
 const canonicalPrimitiveFamilies = ["agents", "skills", "connectors", "workflows", "schedules", "policies", "observations", "memory", "identity", "machines"];
@@ -295,6 +296,16 @@ async function independentProviderSelection({ repositories }) {
   const example = await repositories.omniform.read("examples/omniseed/omniform.yaml");
   const distinctSelections = [...example.matchAll(/provider:\s*([a-z][a-z0-9_]*)/g)].map(match => match[1]);
   return new Set(distinctSelections).size >= 3 ? pass("The schema selects Providers per family and the software-development fixture composes independently selected implementations.") : fail("omniform", "The canonical composition fixture does not demonstrate independent Provider selection.");
+}
+
+async function companySearchCapabilityBoundary({ repositories }) {
+  const example = await repositories.omniform.read("examples/company.omniform.json"), engine = await repositories.omniseed.read("src/engine.js"), tests = await repositories.omniseed.read("test/company-search.test.js");
+  const declaration = JSON.parse(example), capability = declaration.spec.capabilities.find(item => item.id === "company_search"), operation = declaration.spec.operations.find(item => item.id === "search_company");
+  if (!capability || operation?.capability !== "company_search") return fail("omniform", "Canonical Company Search Capability/operation association is missing.");
+  if (engine.includes("spec.providers.memory") || engine.includes("spec.providers.skills")) return fail("omniseed", "search_company contains a hard-coded memory or skills Provider selection.");
+  const requiredTests = ["memory-backed Company Search", "connector-backed federated search", "cannot mutate canonical runtime state"];
+  const missing = requiredTests.filter(marker => !tests.includes(marker));
+  return missing.length ? fail("omniseed", `Company Search capability fixtures missing: ${missing.join(", ")}`) : pass("Company Search is a Capability; search_company resolves declared participants and tests memory-backed and connector-backed strategies without canonical mutation.");
 }
 
 function allDependencies(manifest) {

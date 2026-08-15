@@ -99,6 +99,33 @@ invariants:
     test: actor-neutral-agency-review
     remediation: Keep implementation actor types in resource spec and do not add human- or AI-specific primitive families.
     owner: omniform
+  - id: CAP-001
+    principle: CAPABILITY_PRIMARY
+    description: Domain-level and company-level abilities are modelled as Capabilities composed from primitive requirements rather than promoted into primitive families.
+    severity: high
+    scope: [omniform, omniseed]
+    deterministic: false
+    test: capability-versus-primitive-review
+    remediation: Model the company ability as a Capability and declare only the fundamental manifestation requirements selected by its strategy.
+    owner: omniform
+  - id: CAP-002
+    principle: CAPABILITY_PRIMARY
+    description: A Capability is not silently reduced to one implementation primitive; company_search is not memory or skills, software development is not workflows, and customer support is not agents.
+    severity: critical
+    scope: [omniform, omniseed]
+    deterministic: false
+    test: capability-reduction-review
+    remediation: Preserve the Capability identity and resolve its declared family-specific Provider participants without a universal family alias.
+    owner: omniseed
+  - id: CAP-003
+    principle: CAPABILITY_PRIMARY
+    description: Company Search is an ordinary company_search Capability with a governed search_company operation whose Provider participants come from the declared capability strategy.
+    severity: critical
+    scope: [omniform, omniseed]
+    deterministic: true
+    test: company-search-capability-boundary
+    remediation: Remove hard-coded memory/skills Provider selection and resolve search participants from the operation's Capability requirements and Provider dependencies.
+    owner: omniseed
   - id: ENGINE-001
     principle: DETERMINISTIC_MUTATION
     description: Controlled mutation routes through plan, approve, and apply.

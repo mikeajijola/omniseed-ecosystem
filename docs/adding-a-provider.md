@@ -35,4 +35,6 @@ For each advertised family, document:
 
 If those answers are not clean and testable, do not advertise the family. Start narrow. Vendor APIs, persistent external objects, and general usefulness do not create primitive families.
 
+Do not choose a Provider family based on where data happens to reside. Choose it based on the primitive responsibility being manifested. A retrieval/ranking implementation may realise `skills`; durable organisational continuity may realise `memory`; governed federation to external sources may realise `connectors`. None of those Provider claims turns the `company_search` Capability into that primitive.
+
 The canonical families are `agents`, `skills`, `connectors`, `workflows`, `schedules`, `policies`, `observations`, `memory`, `identity`, and `machines`. New manifests using the removed alpha families `systems` or `company_search` fail conformance. Historical evidence keeps its recorded vocabulary for auditability.

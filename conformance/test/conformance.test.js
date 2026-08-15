@@ -16,7 +16,7 @@ test("current ecosystem emits a valid report with no deterministic failures", as
   assert.equal(report.summary.failed, 0);
   assert.ok(report.summary.passed >= 15);
   assert.ok(report.summary.notAutomated >= 1);
-  assert.equal(report.findings.length, 33);
+  assert.equal(report.findings.length, 36);
 });
 
 test("reverse runtime dependency fails ARCH-001 with inspectable evidence", async () => {
@@ -85,6 +85,21 @@ test("removed Provider primitive family fails PRIM-001", async () => {
   const finding = report.findings.find(item => item.invariant === "PRIM-001");
   assert.equal(finding.status, "failed");
   assert.match(finding.evidence, /systems/);
+});
+
+test("hard-coded Company Search family selection fails CAP-003", async () => {
+  const fixture = await mkdtemp(join(tmpdir(), "omniseed-company-search-conformance-"));
+  const engine = join(fixture, "omniseed");
+  await cp(join(products, "omniseed"), engine, { recursive: true, filter: source => !source.includes("/.git") && !source.includes("/node_modules") });
+  const enginePath = join(engine, "src/engine.js");
+  await writeFile(enginePath, `${await readFile(enginePath, "utf8")}\n// regression fixture: spec.providers.memory\n`);
+  execFileSync("git", ["init", "-q", engine]);
+  execFileSync("git", ["-C", engine, "add", "."]);
+  execFileSync("git", ["-C", engine, "-c", "user.name=Conformance Test", "-c", "user.email=test@example.invalid", "commit", "-qm", "fixture"]);
+  const report = await runConformance({ engine, output: false });
+  const finding = report.findings.find(item => item.invariant === "CAP-003");
+  assert.equal(finding.status, "failed");
+  assert.match(finding.evidence, /hard-coded memory or skills Provider selection/i);
 });
 
 test("Provider manifest schema accepts multiple retained primitive families", async () => {

@@ -35,6 +35,8 @@ The canonical manifestation vocabulary is `agents`, `skills`, `connectors`, `wor
 
 `systems` and `company_search` are removed alpha ontology, not aliases. Persistence belongs to state and does not justify a catch-all primitive. Search remains ordinary replaceable retrieval functionality composed from operations and appropriate primitives. Agent means agency and does not privilege AI: people, software, services, teams, organisations, machines with agency, and AI systems may all be governed realisations.
 
+Company Search is the canonical layer test: `company_search` is a Company Capability, `search_company` is its authorized operation, and the selected strategy composes whichever skills, memory, connectors, identity, policies, observations, or agents it actually requires. A Capability must not be silently reduced to one implementation primitive: Company Search is neither memory nor skills; software development is not workflows; customer support is not agents.
+
 ## Two governed loops
 
 A Realisation Plan changes reality to match the company definition. A Company Change Proposal proposes changing the company definition itself.
