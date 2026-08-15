@@ -1,8 +1,7 @@
 version: 1
 channels:
   generation-1-alpha:
-    omniform: 1.0.0-alpha.2
-    engine: 1.0.0-alpha.2
-    os: 1.0.0-alpha.2
+    omniform: 1.0.0-alpha.3
+    engine: 1.0.0-alpha.3
+    os: 1.0.0-alpha.3
     status: supported
-

@@ -6,6 +6,7 @@ import { cp, mkdtemp, readFile, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { runConformance } from "../src/index.js";
+import Ajv2020 from "ajv/dist/2020.js";
 
 const workspace = resolve(new URL("../..", import.meta.url).pathname);
 const products = existsSync(join(workspace, "omniform")) ? workspace : resolve(workspace, "..");
@@ -15,7 +16,7 @@ test("current ecosystem emits a valid report with no deterministic failures", as
   assert.equal(report.summary.failed, 0);
   assert.ok(report.summary.passed >= 15);
   assert.ok(report.summary.notAutomated >= 1);
-  assert.equal(report.findings.length, 28);
+  assert.equal(report.findings.length, 36);
 });
 
 test("reverse runtime dependency fails ARCH-001 with inspectable evidence", async () => {
@@ -24,7 +25,7 @@ test("reverse runtime dependency fails ARCH-001 with inspectable evidence", asyn
   await cp(join(products, "omniform"), form, { recursive: true, filter: source => !source.includes("/.git") && !source.includes("/node_modules") });
   const manifestPath = join(form, "package.json");
   const manifest = JSON.parse(await readFile(manifestPath, "utf8"));
-  manifest.dependencies["@omniseed/engine"] = "1.0.0-alpha.2";
+  manifest.dependencies["@omniseed/engine"] = "1.0.0-alpha.3";
   await writeFile(manifestPath, JSON.stringify(manifest));
   execFileSync("git", ["init", "-q", form]);
   execFileSync("git", ["-C", form, "add", "."]);
@@ -69,4 +70,45 @@ test("missing GitHub Provider manifest fails PROVIDER-001", async () => {
   const finding = report.findings.find(item => item.invariant === "PROVIDER-001");
   assert.equal(finding.status, "failed");
   assert.match(finding.evidence, /manifest/i);
+});
+
+test("removed Provider primitive family fails PRIM-001", async () => {
+  const fixture = await mkdtemp(join(tmpdir(), "omniseed-provider-family-conformance-"));
+  await cp(join(products, "omniseed-provider-github"), fixture, { recursive: true, filter: source => !source.includes("/.git") && !source.includes("/__pycache__") });
+  const manifestPath = join(fixture, "provider-package.json"), manifest = JSON.parse(await readFile(manifestPath, "utf8"));
+  manifest.primitiveFamilies = ["systems"];
+  await writeFile(manifestPath, JSON.stringify(manifest));
+  execFileSync("git", ["init", "-q", fixture]);
+  execFileSync("git", ["-C", fixture, "add", "."]);
+  execFileSync("git", ["-C", fixture, "-c", "user.name=Conformance Test", "-c", "user.email=test@example.invalid", "commit", "-qm", "fixture"]);
+  const report = await runConformance({ githubProvider: fixture, output: false });
+  const finding = report.findings.find(item => item.invariant === "PRIM-001");
+  assert.equal(finding.status, "failed");
+  assert.match(finding.evidence, /systems/);
+});
+
+test("hard-coded Company Search family selection fails CAP-003", async () => {
+  const fixture = await mkdtemp(join(tmpdir(), "omniseed-company-search-conformance-"));
+  const engine = join(fixture, "omniseed"), form = join(fixture, "omniform");
+  await cp(join(products, "omniseed"), engine, { recursive: true, filter: source => !source.includes("/.git") && !source.includes("/node_modules") });
+  await cp(join(products, "omniform"), form, { recursive: true, filter: source => !source.includes("/.git") && !source.includes("/node_modules") });
+  const enginePath = join(engine, "src/engine.js");
+  await writeFile(enginePath, `${await readFile(enginePath, "utf8")}\n// regression fixture: spec.providers.memory\n`);
+  await writeFile(join(form, "examples/company.omniform.json"), JSON.stringify({ spec: { capabilities: [{ id: "company_search" }], operations: [{ id: "search_company", capability: "company_search" }] } }));
+  for (const repository of [engine, form]) {
+    execFileSync("git", ["init", "-q", repository]);
+    execFileSync("git", ["-C", repository, "add", "."]);
+    execFileSync("git", ["-C", repository, "-c", "user.name=Conformance Test", "-c", "user.email=test@example.invalid", "commit", "-qm", "fixture"]);
+  }
+  const report = await runConformance({ omniform: form, engine, output: false });
+  const finding = report.findings.find(item => item.invariant === "CAP-003");
+  assert.equal(finding.status, "failed");
+  assert.match(finding.evidence, /hard-coded memory or skills Provider selection/i);
+});
+
+test("Provider manifest schema accepts multiple retained primitive families", async () => {
+  const schema = JSON.parse(await readFile(join(workspace, "providers/provider-package.schema.json"), "utf8"));
+  const validate = new Ajv2020({ strict: true }).compile(schema);
+  const manifest = { manifestVersion: "1.0", id: "multi_family", version: "1.0.0", engineCompatibility: "omniseed.provider.protocol/1.0", primitiveFamilies: ["connectors", "workflows", "observations"], operations: [], configurationSchema: "./configuration.schema.json", observationTypes: [], evidenceTypes: [], permissions: [] };
+  assert.equal(validate(manifest), true);
 });
