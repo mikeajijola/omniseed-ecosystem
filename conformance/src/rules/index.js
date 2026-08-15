@@ -2,6 +2,7 @@ import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { execFileSync } from "node:child_process";
 import Ajv2020 from "ajv/dist/2020.js";
+import { parse } from "yaml";
 
 const pass = evidence => ({ status: "passed", evidence });
 const fail = (repository, evidence) => ({ status: "failed", repository, evidence });
@@ -32,7 +33,11 @@ export const ruleTests = {
   "github-provider-manifest": githubProviderManifest,
   "canonical-primitive-vocabulary": canonicalPrimitiveVocabulary,
   "independent-provider-selection": independentProviderSelection,
-  "company-search-capability-boundary": companySearchCapabilityBoundary
+  "company-search-capability-boundary": companySearchCapabilityBoundary,
+  "canonical-company-git-authority": canonicalCompanyGitAuthority,
+  "explainable-realisation-chain": explainableRealisationChain,
+  "replaceable-governed-steward": replaceableGovernedSteward,
+  "optional-os-realisation": optionalOsRealisation
 };
 
 const canonicalPrimitiveFamilies = ["agents", "skills", "connectors", "workflows", "schedules", "policies", "observations", "memory", "identity", "machines"];
@@ -119,7 +124,8 @@ async function governedCompanyChange({ repositories }) {
     [companyChange, "company_change.apply", "baseline apply authority"],
     [engine, "proposal.requiredAuthority.approve", "proposal-specific approval authority"],
     [engine, "proposal.requiredAuthority.apply", "proposal-specific apply authority"],
-    [engine, "canonicalDefinition: candidate", "canonical definition persistence"],
+    [engine, "companyRepository.submit", "Git company repository submission"],
+    [engine, 'status: "submitted"', "pending-merge company status"],
     [companyChange, "verifyCompanyChangeProposal", "exact proposal hashing"],
     [companyChange, "assertOmniform(candidate)", "candidate Omniform validation"],
     [companyChange, "evidence_not_found", "evidence reference validation"],
@@ -128,7 +134,59 @@ async function governedCompanyChange({ repositories }) {
     [tests, "future governance", "current-policy recursion test"]
   ];
   const missing = required.filter(([source, marker]) => !source.includes(marker)).map(([, , description]) => description);
-  return missing.length ? fail("omniseed", `Governed Company Change markers missing: ${missing.join(", ")}`) : pass("Company changes are evidence-backed exact proposals, separately authorized and approved, validated against Omniform, stale-protected, and tested apart from realisation.");
+  return missing.length ? fail("omniseed", `Governed Company Change markers missing: ${missing.join(", ")}`) : pass("Company changes are evidence-backed exact proposals, separately authorized and approved, validated against Omniform, stale-protected, and submitted to canonical Git without runtime desired-state replacement.");
+}
+
+async function canonicalCompanyGitAuthority({ repositories }) {
+  if (!repositories.company) return fail("company", "Canonical OmniSeed Ecosystem company repository is absent; pass --company.");
+  const company = parse(await repositories.company.read("omniform.yaml")), desired = company.spec?.governance?.desiredState;
+  const required = [desired?.repository?.startsWith("https://"), desired?.branch, desired?.path, desired?.changeMode === "pull_request"];
+  if (!required.every(Boolean)) return fail("company", "Company desired-state authority must name an HTTPS repository, merged branch, Omniform path, and pull_request change mode.");
+  const engine = await repositories.omniseed.read("src/engine.js");
+  if (!engine.includes("companyRepository.submit") || !engine.includes('status: "submitted"')) return fail("omniseed", "Git-backed apply does not submit a pending-merge repository change.");
+  return pass(`Company ${company.metadata.id} names ${desired.repository}#${desired.branch}:${desired.path}; engine apply submits rather than replacing merged desired state.`);
+}
+
+async function explainableRealisationChain({ repositories }) {
+  if (!repositories.company) return fail("company", "Canonical company repository is absent.");
+  const company = parse(await repositories.company.read("omniform.yaml"));
+  const resources = new Map(Object.entries(company.spec.resources ?? {}).flatMap(([family, items]) => items.map(item => [item.id, { family, ...item }])));
+  const capabilities = new Map(company.spec.capabilities.map(item => [item.id, item]));
+  for (const realisation of company.spec.realisations ?? []) {
+    const capability = capabilities.get(realisation.capability);
+    if (!capability) return fail("company", `Realisation ${realisation.id} references missing Capability ${realisation.capability}.`);
+    const requirements = new Set(capability.requires.map(item => item.id));
+    for (const participant of realisation.participants) {
+      const resource = resources.get(participant.resource);
+      if (!resource) return fail("company", `Realisation ${realisation.id} references missing primitive resource ${participant.resource}.`);
+      if (!company.spec.providers[resource.family]) return fail("company", `Primitive ${participant.resource} has no independently selected ${resource.family} Provider.`);
+      if ((participant.supplies ?? []).some(id => !requirements.has(id) || !(resource.offers ?? []).includes(id))) return fail("company", `Participant ${participant.resource} claims a requirement outside its Capability/resource offers.`);
+    }
+  }
+  const compiler = await repositories.omniseed.read("src/compiler.js");
+  const markers = ["realisations", "participants", "provider", "observed", "evidence"];
+  return markers.every(marker => compiler.includes(marker)) ? pass("Every company Realisation references primitive resources with family Provider selections; engine inspection projects Provider, observation, and evidence trace data.") : fail("omniseed", "Compiled realisation trace is incomplete.");
+}
+
+async function replaceableGovernedSteward({ repositories }) {
+  if (!repositories.company) return fail("company", "Canonical company repository is absent.");
+  const company = parse(await repositories.company.read("omniform.yaml")), stewardship = company.spec.stewardship;
+  const capability = company.spec.capabilities.find(item => item.id === stewardship?.capability), realisation = company.spec.realisations.find(item => item.id === stewardship?.realisation);
+  const agents = new Set((company.spec.resources.agents ?? []).map(item => item.id)), actor = realisation?.participants.find(item => agents.has(item.resource));
+  if (!capability || realisation?.capability !== capability.id || !actor) return fail("company", "Stewardship must reference an independent Capability, matching Realisation, and agents-family participant.");
+  const app = await repositories.omniseedos.read("src/app.js"), tests = await repositories.omniseedos.read("test/app.test.js");
+  const required = ["engine.invokeOperation", "propose_company_change", "cannot grant myself", "registry.stewardship", "declared steward resolves company context"];
+  const source = `${app}\n${tests}`;
+  return required.every(marker => source.includes(marker)) ? pass(`Stewardship Capability ${capability.id} is currently realised by replaceable Agent ${actor.resource}; reads use OmniSeed operations and self-escalation is refused.`) : fail("omniseedos", "Governed replaceable steward client markers are missing.");
+}
+
+async function optionalOsRealisation({ repositories }) {
+  if (!repositories.company) return fail("company", "Canonical company repository is absent.");
+  const company = parse(await repositories.company.read("omniform.yaml"));
+  const os = (company.spec.resources.connectors ?? []).find(item => item.id === "omniseed_os"), realisation = company.spec.realisations.find(item => item.participants.some(participant => participant.resource === os?.id));
+  if (!os?.spec?.optional || !realisation) return fail("company", "OmniSeed OS must be an optional primitive participant under an operating Capability realisation.");
+  const publicApp = await repositories.omniseedos.read("public/app.js");
+  return publicApp.includes("registry.stewardship") && publicApp.includes("registry.realisations") ? pass("OmniSeed OS is optional company state and its UI discovers steward and realisation projections from OmniSeed.") : fail("omniseedos", "OS UI does not discover steward/realisations from engine state.");
 }
 
 async function explicitProviderRegistration({ repositories }) {

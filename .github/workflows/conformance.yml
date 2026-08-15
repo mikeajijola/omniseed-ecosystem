@@ -39,6 +39,11 @@ jobs:
         with:
           repository: mikeajijola/omniseed-provider-github
           path: omniseed-provider-github
+      - name: Check out OmniSeed Ecosystem company
+        uses: actions/checkout@v7
+        with:
+          repository: mikeajijola/omniseed-ecosystem-company
+          path: omniseed-ecosystem-company
       - uses: actions/setup-node@v7
         with:
           node-version: 22
@@ -63,6 +68,7 @@ jobs:
           --engine ../omniseed
           --os ../omniseedos
           --github-provider ../omniseed-provider-github
+          --company ../omniseed-ecosystem-company
           --output reports/latest.json
           --fail-on warning
         working-directory: omniseed-ecosystem

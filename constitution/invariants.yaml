@@ -126,6 +126,42 @@ invariants:
     test: company-search-capability-boundary
     remediation: Remove hard-coded memory/skills Provider selection and resolve search participants from the operation's Capability requirements and Provider dependencies.
     owner: omniseed
+  - id: COMPANY-001
+    principle: STATE_SEPARATION
+    description: Every production company names one PR-governed canonical Git desired-state authority, distinct from runtime observations and reusable product repositories.
+    severity: critical
+    scope: [company, omniform, omniseed]
+    deterministic: true
+    test: canonical-company-git-authority
+    remediation: Declare the canonical HTTPS Git repository, merged branch, Omniform path, and pull_request change mode and remove runtime canonical-definition mutation.
+    owner: omniseed-ecosystem-company
+  - id: COMPANY-002
+    principle: CAPABILITY_PRIMARY
+    description: Named realisations trace Capability requirements through primitive resources and independently selected family Providers.
+    severity: critical
+    scope: [company, omniform, omniseed]
+    deterministic: true
+    test: explainable-realisation-chain
+    remediation: Reference a named realisation whose primitive participants supply declared requirements and compile Provider, observation, and evidence trace data.
+    owner: omniseed
+  - id: COMPANY-003
+    principle: INTERFACE_NEUTRALITY
+    description: Company Stewardship exists independently of Lily, and the declared steward uses ordinary governed OmniSeed operations without self-escalation.
+    severity: critical
+    scope: [company, omniseedos]
+    deterministic: true
+    test: replaceable-governed-steward
+    remediation: Declare stewardship as a Capability and named realisation with a replaceable agents participant; route reads and proposals through engine operations.
+    owner: omniseedos
+  - id: COMPANY-004
+    principle: INTERFACE_NEUTRALITY
+    description: OmniSeed OS is an optional human-interface realisation discovered from company state and never defines company identity.
+    severity: critical
+    scope: [company, omniseedos]
+    deterministic: true
+    test: optional-os-realisation
+    remediation: Model the OS under an operating Capability and make the UI project instance and steward binding from OmniSeed inspection.
+    owner: omniseedos
   - id: ENGINE-001
     principle: DETERMINISTIC_MUTATION
     description: Controlled mutation routes through plan, approve, and apply.
