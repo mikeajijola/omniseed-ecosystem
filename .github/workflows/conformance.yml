@@ -23,19 +23,19 @@ jobs:
         uses: actions/checkout@v7
         with:
           repository: mikeajijola/omniform
-          ref: ${{ github.event_name == 'pull_request' && 'feat/canonical-instance-model' || 'main' }}
+          ref: main
           path: omniform
       - name: Check out OmniSeed
         uses: actions/checkout@v7
         with:
           repository: mikeajijola/omniseed
-          ref: ${{ github.event_name == 'pull_request' && 'feat/canonical-instance-model' || 'main' }}
+          ref: main
           path: omniseed
       - name: Check out OmniSeed OS
         uses: actions/checkout@v7
         with:
           repository: mikeajijola/omniseedos
-          ref: ${{ github.event_name == 'pull_request' && 'feat/canonical-instance-model' || 'main' }}
+          ref: main
           path: omniseedos
       - name: Check out GitHub Provider
         uses: actions/checkout@v7
@@ -59,8 +59,11 @@ jobs:
         run: npm ci
         working-directory: omniform
       - name: Install OmniSeed test dependencies
-        run: npm install --no-save --no-package-lock ../omniform
+        run: npm ci
         working-directory: omniseed
+      - name: Install OmniSeed OS test dependencies
+        run: npm ci
+        working-directory: omniseedos
       - name: Test
         run: npm test
         working-directory: omniseed-ecosystem
