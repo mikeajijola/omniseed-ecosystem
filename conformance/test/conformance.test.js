@@ -20,7 +20,7 @@ test("current ecosystem emits a valid report with no deterministic failures", as
   assert.equal(report.summary.failed, 0);
   assert.ok(report.summary.passed >= 15);
   assert.ok(report.summary.notAutomated >= 1);
-  assert.equal(report.findings.length, 40);
+  assert.equal(report.findings.length, 41);
 });
 
 test("company without PR-governed Git authority fails COMPANY-001", async () => {

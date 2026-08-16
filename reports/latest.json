@@ -1,29 +1,33 @@
 {
   "ecosystemVersion": "1",
-  "generatedAt": "2026-08-14T12:13:26.422Z",
+  "generatedAt": "2026-08-16T07:25:52.132Z",
   "repositories": {
     "omniform": {
-      "commit": "43a66507eff70571bb2764d525a615633b97d542",
-      "path": "omniform"
+      "commit": "0d06b1134ffa3d9810f04a8889850ba108d84877",
+      "path": "../omniform"
     },
     "omniseed": {
-      "commit": "171ffd5afa0cd56c56d67ea400a92f9d455a2ac6",
-      "path": "omniseed"
+      "commit": "58ec80a05f41c51c33087d20847172cafd25405e",
+      "path": "../omniseed"
     },
     "omniseedos": {
-      "commit": "4a2c74b8522498d6080865889d15a1635e9a761e",
-      "path": "omniseedos"
+      "commit": "c186400f518c8b94231910799af2dd644bf9df7a",
+      "path": "../omniseedos"
+    },
+    "company": {
+      "commit": "aa558ba8d4ecb03f95997204749fbad5d51c3ae8",
+      "path": "../omniseed-ecosystem-company"
     },
     "githubProvider": {
-      "commit": "7870f67c97f9ff6b1fee52c8bfeaac8bd38fb2be",
+      "commit": "016deebf1af7049963bab92407642fbd0e283e41",
       "path": "../omniseed-provider-github"
     }
   },
   "summary": {
-    "passed": 24,
+    "passed": 31,
     "failed": 0,
     "warnings": 0,
-    "notAutomated": 4
+    "notAutomated": 10
   },
   "findings": [
     {
@@ -75,6 +79,102 @@
       "test": "semantic-portability-review"
     },
     {
+      "invariant": "PRIM-001",
+      "status": "passed",
+      "severity": "critical",
+      "repository": "omniform,githubProvider",
+      "evidence": "Omniform and Provider contracts expose exactly the ten canonical primitive families and the GitHub Provider advertises only retained families.",
+      "test": "canonical-primitive-vocabulary"
+    },
+    {
+      "invariant": "PRIM-002",
+      "status": "not_automated",
+      "severity": "critical",
+      "repository": "githubProvider",
+      "evidence": "This invariant requires semantic or future behavioral review.",
+      "test": "provider-family-semantic-review"
+    },
+    {
+      "invariant": "PRIM-003",
+      "status": "not_automated",
+      "severity": "critical",
+      "repository": "omniform,omniseed",
+      "evidence": "This invariant requires semantic or future behavioral review.",
+      "test": "persistence-semantic-review"
+    },
+    {
+      "invariant": "PRIM-004",
+      "status": "passed",
+      "severity": "critical",
+      "repository": "omniform,omniseed",
+      "evidence": "The schema selects Providers per family and the software-development fixture composes independently selected implementations.",
+      "test": "independent-provider-selection"
+    },
+    {
+      "invariant": "AGENT-003",
+      "status": "not_automated",
+      "severity": "high",
+      "repository": "omniform,omniseed",
+      "evidence": "This invariant requires semantic or future behavioral review.",
+      "test": "actor-neutral-agency-review"
+    },
+    {
+      "invariant": "CAP-001",
+      "status": "not_automated",
+      "severity": "high",
+      "repository": "omniform,omniseed",
+      "evidence": "This invariant requires semantic or future behavioral review.",
+      "test": "capability-versus-primitive-review"
+    },
+    {
+      "invariant": "CAP-002",
+      "status": "not_automated",
+      "severity": "critical",
+      "repository": "omniform,omniseed",
+      "evidence": "This invariant requires semantic or future behavioral review.",
+      "test": "capability-reduction-review"
+    },
+    {
+      "invariant": "CAP-003",
+      "status": "passed",
+      "severity": "critical",
+      "repository": "omniform,omniseed",
+      "evidence": "Company Search is a Capability; search_company resolves declared participants and tests memory-backed and connector-backed strategies without canonical mutation.",
+      "test": "company-search-capability-boundary"
+    },
+    {
+      "invariant": "COMPANY-001",
+      "status": "passed",
+      "severity": "critical",
+      "repository": "company,omniform,omniseed",
+      "evidence": "Company omniseed_ecosystem names https://github.com/mikeajijola/omniseed-ecosystem-company.git#main:omniform.yaml; engine apply submits rather than replacing merged desired state.",
+      "test": "canonical-company-git-authority"
+    },
+    {
+      "invariant": "COMPANY-002",
+      "status": "passed",
+      "severity": "critical",
+      "repository": "company,omniform,omniseed",
+      "evidence": "Every company Realisation references primitive resources with family Provider selections; engine inspection projects Provider, observation, and evidence trace data.",
+      "test": "explainable-realisation-chain"
+    },
+    {
+      "invariant": "COMPANY-003",
+      "status": "passed",
+      "severity": "critical",
+      "repository": "company,omniseedos",
+      "evidence": "Stewardship Capability steward_omniseed_ecosystem is currently realised by replaceable Agent lily; reads use OmniSeed operations and self-escalation is refused.",
+      "test": "replaceable-governed-steward"
+    },
+    {
+      "invariant": "COMPANY-004",
+      "status": "passed",
+      "severity": "critical",
+      "repository": "company,omniseedos",
+      "evidence": "OmniSeed OS is optional company state and its UI discovers steward and realisation projections from OmniSeed.",
+      "test": "optional-os-realisation"
+    },
+    {
       "invariant": "ENGINE-001",
       "status": "passed",
       "severity": "critical",
@@ -119,7 +219,7 @@
       "status": "passed",
       "severity": "high",
       "repository": "omniseed",
-      "evidence": "Engine runtime dependencies contain only the portable Omniform package.",
+      "evidence": "Engine runtime dependencies contain only Omniform and the vendor-neutral YAML document formatter.",
       "test": "engine-no-vendor-sdk"
     },
     {
@@ -151,7 +251,7 @@
       "status": "passed",
       "severity": "critical",
       "repository": "omniseed",
-      "evidence": "Company changes are evidence-backed exact proposals, separately authorized and approved, validated against Omniform, stale-protected, and tested apart from realisation.",
+      "evidence": "Company changes are evidence-backed exact proposals, separately authorized and approved, validated against Omniform, stale-protected, and submitted to canonical Git without runtime desired-state replacement.",
       "test": "governed-company-change"
     },
     {
@@ -207,7 +307,7 @@
       "status": "passed",
       "severity": "high",
       "repository": "omniform,omniseed,omniseedos",
-      "evidence": "All packages match supported channel 1.0.0-alpha.2.",
+      "evidence": "All packages match supported channel 1.0.0-alpha.4.",
       "test": "package-compatibility"
     },
     {
@@ -249,6 +349,14 @@
       "repository": "githubProvider",
       "evidence": "GitHub Provider manifest validates, its configuration schema exists, and its static ID/operation claims match the implementation without asserting live status.",
       "test": "github-provider-manifest"
+    },
+    {
+      "invariant": "PROVIDER-002",
+      "status": "not_automated",
+      "severity": "critical",
+      "repository": "omniform,omniseed,omniseedos,githubProvider",
+      "evidence": "This invariant requires semantic or future behavioral review.",
+      "test": "provider-organisation-semantic-review"
     }
   ]
 }
