@@ -42,6 +42,12 @@ jobs:
         with:
           repository: mikeajijola/omniseed-provider-github
           path: omniseed-provider-github
+      - name: Check out Vercel Provider
+        uses: actions/checkout@v7
+        with:
+          repository: mikeajijola/omniseed-provider-vercel
+          ref: 89c5c2e74c3f71b8e937ae0334141f9c9dfddefc
+          path: omniseed-provider-vercel
       - name: Check out OmniSeed Ecosystem company
         uses: actions/checkout@v7
         with:
@@ -74,6 +80,7 @@ jobs:
           --engine ../omniseed
           --os ../omniseedos
           --github-provider ../omniseed-provider-github
+          --vercel-provider ../omniseed-provider-vercel
           --company ../omniseed-ecosystem-company
           --output reports/latest.json
           --fail-on warning

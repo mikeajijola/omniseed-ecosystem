@@ -14,13 +14,14 @@ const products = resolve(process.env.OMNISEED_PRODUCTS_ROOT ?? detectedProducts)
 const defaultCompany = existsSync(join(products, "omniseed-ecosystem-company")) ? join(products, "omniseed-ecosystem-company") : join(products, "..", "omniseed-ecosystem-company");
 const canonicalCompany = resolve(process.env.OMNISEED_COMPANY_REPOSITORY ?? defaultCompany);
 const githubProvider = existsSync(join(products, "provider-github")) ? join(products, "provider-github") : join(products, "omniseed-provider-github");
+const vercelProvider = resolve(process.env.OMNISEED_VERCEL_PROVIDER ?? join(products, "omniseed-provider-vercel"));
 
 test("current ecosystem emits a valid report with no deterministic failures", async () => {
-  const report = await runConformance({ omniform: join(products, "omniform"), engine: join(products, "omniseed"), os: join(products, "omniseedos"), company: canonicalCompany, githubProvider, output: false });
+  const report = await runConformance({ omniform: join(products, "omniform"), engine: join(products, "omniseed"), os: join(products, "omniseedos"), company: canonicalCompany, githubProvider, vercelProvider, output: false });
   assert.equal(report.summary.failed, 0);
   assert.ok(report.summary.passed >= 15);
   assert.ok(report.summary.notAutomated >= 1);
-  assert.equal(report.findings.length, 41);
+  assert.equal(report.findings.length, 42);
 });
 
 test("company without PR-governed Git authority fails COMPANY-001", async () => {
@@ -159,6 +160,19 @@ test("Provider manifest schema accepts multiple retained primitive families", as
   const validate = new Ajv2020({ strict: true }).compile(schema);
   const manifest = { manifestVersion: "1.0", id: "multi_family", version: "1.0.0", engineCompatibility: "omniseed.provider.protocol/1.0", primitiveFamilies: ["connectors", "workflows", "observations"], operations: [], configurationSchema: "./configuration.schema.json", observationTypes: [], evidenceTypes: [], permissions: [] };
   assert.equal(validate(manifest), true);
+});
+
+test("duplicate active Provider package manifests fail PROVIDER-003 with both paths", async () => {
+  const fixture = await mkdtemp(join(tmpdir(), "omniseed-provider-duplicate-"));
+  await cp(vercelProvider, fixture, { recursive: true, filter: source => !source.includes("/.git") && !source.includes("/__pycache__") && !source.includes("/node_modules") });
+  execFileSync("git", ["init", "-q", fixture]);
+  execFileSync("git", ["-C", fixture, "add", "."]);
+  execFileSync("git", ["-C", fixture, "-c", "user.name=Conformance Test", "-c", "user.email=test@example.invalid", "commit", "-qm", "duplicate fixture"]);
+  const report = await runConformance({ githubProvider: fixture, vercelProvider, output: false });
+  const finding = report.findings.find(item => item.invariant === "PROVIDER-003");
+  assert.equal(finding.status, "failed");
+  assert.match(finding.evidence, /githubProvider/);
+  assert.match(finding.evidence, /vercelProvider/);
 });
 
 async function companyFixture(name, mutate) {

@@ -31,6 +31,7 @@ export const ruleTests = {
   "ownership-documentation": ownershipDocumentation,
   "stable-authority-ids": stableAuthorityIds,
   "github-provider-manifest": githubProviderManifest,
+  "unique-provider-manifest-id": uniqueProviderManifestId,
   "canonical-primitive-vocabulary": canonicalPrimitiveVocabulary,
   "independent-provider-selection": independentProviderSelection,
   "company-search-capability-boundary": companySearchCapabilityBoundary,
@@ -344,6 +345,21 @@ async function githubProviderManifest({ root, repositories }) {
   const implementation = await repository.read("provider/github_provider.py");
   const missing = [manifest.id, ...manifest.operations].filter(value => !implementation.includes(value));
   return missing.length ? fail("githubProvider", `Manifest claims are absent from implementation: ${missing.join(", ")}`) : pass("GitHub Provider manifest validates, its configuration schema exists, and its static ID/operation claims match the implementation without asserting live status.");
+}
+
+async function uniqueProviderManifestId({ repositories }) {
+  const declarations = [];
+  for (const [name, repository] of Object.entries(repositories)) {
+    if (!repository.files.includes("provider-package.json")) continue;
+    let manifest;
+    try { manifest = JSON.parse(await repository.read("provider-package.json")); }
+    catch (error) { return fail(name, `Provider manifest cannot be inspected: ${error.message}`); }
+    if (manifest.id) declarations.push({ id: manifest.id, repository: name, path: repository.path });
+  }
+  const counts = declarations.reduce((result, item) => result.set(item.id, (result.get(item.id) ?? 0) + 1), new Map());
+  const duplicates = declarations.filter(item => counts.get(item.id) > 1);
+  if (duplicates.length) return fail("provider-packages", `Duplicate canonical Provider manifest ID declarations: ${duplicates.map(item => `${item.id} at ${item.repository}:${item.path}`).join(", ")}`);
+  return pass(`Active Provider package manifests declare unique canonical IDs: ${declarations.map(item => `${item.id} (${item.repository})`).join(", ")}.`);
 }
 
 async function canonicalPrimitiveVocabulary({ root, repositories }) {
