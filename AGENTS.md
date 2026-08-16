@@ -10,6 +10,7 @@ When you work here, protect the boundaries that let Company as Code stay truthfu
 - OmniSeed owns controlled runtime work and evidence.
 - OmniSeed OS shows and operates engine-owned state. It does not create another truth.
 - A requested Provider is not automatically installed, connected, healthy, or capable.
+- A Provider is the supplying organisation boundary. Never create a Provider for one of that organisation's products, services, frameworks, SDKs, or features; model those beneath the Provider.
 - “We asked for it” is not the same as “it exists.”
 - AI systems may inspect and propose. They do not bypass plan, approval, apply, and observation.
 - This repository tests the ecosystem. It must never become a runtime dependency of the products.
@@ -27,4 +28,3 @@ When you work here, protect the boundaries that let Company as Code stay truthfu
 - Never read or print credentials while inspecting repositories.
 
 Run `npm test` and `npm run conformance` before proposing a change. See [`docs/adding-an-invariant.md`](docs/adding-an-invariant.md) and [`docs/architecture-governance.md`](docs/architecture-governance.md).
-

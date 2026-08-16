@@ -1,5 +1,9 @@
 # Adding a Provider package
 
+Read the authoritative [Provider semantics](provider-semantics.md) first. A Provider is the supplying organisation boundary, not one of its products, services, frameworks, SDKs, or features.
+
+Before creating a Provider, identify the supplying organisation. If the proposed Provider is merely a product, service, framework, SDK, or feature of an existing Provider organisation, do not create a new Provider. Model it as an implementation/product beneath that Provider.
+
 A Provider is a replaceable way to realise part of a company. A package name or vendor is not the Capability itself.
 
 Every Provider package publishes a static manifest that validates against [`providers/provider-package.schema.json`](../providers/provider-package.schema.json). The manifest declares what the package can support. It contains no credentials, tenant settings, runtime health, installation claim, or current connection state.
@@ -22,9 +26,11 @@ Ask: “Which existing primitive family does this implementation truthfully real
 
 For each advertised family, document:
 
+- Provider organisation/legal or supplying entity
+- Canonical Provider ID
 - Primitive family
 - Semantic responsibility
-- Provider implementation
+- Product/service/framework/SDK used for the implementation
 - Authority/authentication
 - Plan behaviour
 - Apply behaviour
@@ -34,6 +40,8 @@ For each advertised family, document:
 - Failure/drift behaviour
 
 If those answers are not clean and testable, do not advertise the family. Start narrow. Vendor APIs, persistent external objects, and general usefulness do not create primitive families.
+
+Semantic review fails when the declared Provider identity is only a product or framework belonging to an already-modelled supplying organisation. Do not infer this from a name alone: require the explicit authoring declaration and inspect ownership evidence.
 
 Do not choose a Provider family based on where data happens to reside. Choose it based on the primitive responsibility being manifested. A retrieval/ranking implementation may realise `skills`; durable organisational continuity may realise `memory`; governed federation to external sources may realise `connectors`. None of those Provider claims turns the `company_search` Capability into that primitive.
 

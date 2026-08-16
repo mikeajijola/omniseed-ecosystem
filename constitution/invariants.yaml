@@ -360,3 +360,12 @@ invariants:
     test: github-provider-manifest
     remediation: Restore a schema-valid provider-package.json and referenced configuration schema whose claims match the implementation.
     owner: omniseed-provider-github
+  - id: PROVIDER-002
+    principle: PROVIDER_TRUTH
+    description: Provider identity is the supplying organisation boundary; products, services, frameworks, SDKs, and features remain implementation choices beneath it.
+    severity: critical
+    scope: [omniform, omniseed, omniseedos, githubProvider]
+    deterministic: false
+    test: provider-organisation-semantic-review
+    remediation: Declare the supplying organisation, canonical Provider ID, supported primitive families, and products used per family; replace product-shaped Provider identities with the supplying organisation boundary.
+    owner: omniseed-ecosystem

@@ -12,9 +12,11 @@ Every production company declares one HTTPS Git repository, merged branch, Omnif
 
 The required trace is:
 
-`Capability → requirement → named Realisation → primitive resource → primitive family → selected Provider → observed resource → evidence`
+`Capability → requirement → named Realisation → primitive resource → primitive family → selected Provider → Provider product/service/framework → observed resource → evidence`
 
 Providers advertise primitive-family contracts. They never directly claim arbitrary business Capabilities. Actors, including people, AI agents, software, machines, and external organisations, participate through primitive resources and remain replaceable.
+
+Provider identity means the supplying organisation, as defined by [Provider semantics](provider-semantics.md). Thus Lily is an Agent primitive participant implemented using Vercel's Eve framework; Vercel is the Provider. GitHub Actions and Checks are products beneath the GitHub Provider, not separate Providers.
 
 ## Steward and interfaces
 

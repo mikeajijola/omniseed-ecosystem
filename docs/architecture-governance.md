@@ -1,5 +1,7 @@
 # Architecture governance
 
+Provider identity follows the authoritative [Provider semantics](provider-semantics.md): the Provider is the supplying organisation boundary; its products, services, frameworks, SDKs, and features are implementation choices beneath that boundary.
+
 The ecosystem constitution is a versioned statement of what must remain true across Omniform, OmniSeed, and OmniSeed OS.
 
 The governance repository observes those products. It is never imported by their runtime packages.
