@@ -17,7 +17,8 @@
         "omniseed": { "$ref": "#/$defs/repository" },
         "omniseedos": { "$ref": "#/$defs/repository" },
         "company": { "$ref": "#/$defs/repository" },
-        "githubProvider": { "$ref": "#/$defs/repository" }
+        "githubProvider": { "$ref": "#/$defs/repository" },
+        "vercelProvider": { "$ref": "#/$defs/repository" }
       }
     },
     "summary": {

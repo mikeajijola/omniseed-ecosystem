@@ -2,7 +2,7 @@
 
 This document is the authoritative ecosystem definition of **Provider**.
 
-> A Provider represents the supplying organisation/provider boundary. Products, services, frameworks and SDKs offered by that organisation are implementation choices beneath the Provider; they are not Providers themselves.
+> A Provider represents the supplying organisation/provider boundary. Products, services, frameworks, SDKs, and features offered by that organisation are implementation choices beneath the Provider; they are not Providers themselves.
 
 A Provider answers: **Who supplies this implementation capability?** A product, service, or framework answers: **What are we using from that Provider?**
 

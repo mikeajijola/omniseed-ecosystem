@@ -15,7 +15,8 @@ export async function runConformance(options = {}) {
     omniseed: resolve(options.engine ?? defaultRepository("omniseed")),
     omniseedos: resolve(options.os ?? defaultRepository("omniseedos")),
     ...(companyRepository(options.company) ? { company: companyRepository(options.company) } : {}),
-    ...(providerRepository(options.githubProvider) ? { githubProvider: providerRepository(options.githubProvider) } : {})
+    ...(providerRepository("omniseed-provider-github", options.githubProvider) ? { githubProvider: providerRepository("omniseed-provider-github", options.githubProvider) } : {}),
+    ...(providerRepository("omniseed-provider-vercel", options.vercelProvider) ? { vercelProvider: providerRepository("omniseed-provider-vercel", options.vercelProvider) } : {})
   };
   const catalogue = parse(await readFile(join(root, "constitution/invariants.yaml"), "utf8"));
   const compatibility = parse(await readFile(join(root, "compatibility/packages.yaml"), "utf8"));
@@ -62,18 +63,27 @@ export async function runConformance(options = {}) {
 }
 
 function defaultRepository(name) {
+  const configuredRoot = process.env.OMNISEED_PRODUCTS_ROOT;
+  if (configuredRoot) return resolve(configuredRoot, name);
   const nested = join(root, name);
   return existsSync(nested) ? nested : resolve(root, "..", name);
 }
 
-function providerRepository(explicit) {
+function providerRepository(name, explicit) {
   if (explicit) return resolve(explicit);
-  const candidate = resolve(root, "..", "omniseed-provider-github");
+  const configured = name === "omniseed-provider-github" ? process.env.OMNISEED_GITHUB_PROVIDER : process.env.OMNISEED_VERCEL_PROVIDER;
+  if (configured) return resolve(configured);
+  if (process.env.OMNISEED_PRODUCTS_ROOT) {
+    const candidate = resolve(process.env.OMNISEED_PRODUCTS_ROOT, name === "omniseed-provider-github" ? "provider-github" : name);
+    if (existsSync(candidate)) return candidate;
+  }
+  const candidate = resolve(root, "..", name);
   return existsSync(candidate) ? candidate : null;
 }
 
 function companyRepository(explicit) {
   if (explicit) return resolve(explicit);
+  if (process.env.OMNISEED_COMPANY_REPOSITORY) return resolve(process.env.OMNISEED_COMPANY_REPOSITORY);
   const candidate = resolve(root, "..", "omniseed-ecosystem-company");
   return existsSync(candidate) ? candidate : null;
 }

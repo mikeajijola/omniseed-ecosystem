@@ -369,3 +369,12 @@ invariants:
     test: provider-organisation-semantic-review
     remediation: Declare the supplying organisation, canonical Provider ID, supported primitive families, and products used per family; replace product-shaped Provider identities with the supplying organisation boundary.
     owner: omniseed-ecosystem
+  - id: PROVIDER-003
+    principle: PROVIDER_TRUTH
+    description: Two active Provider package manifests cannot declare the same canonical Provider ID.
+    severity: critical
+    scope: [provider-packages]
+    deterministic: true
+    test: unique-provider-manifest-id
+    remediation: Consolidate primitive-family implementations beneath one Provider package manifest for the supplying organisation; product adapters without Provider manifests remain allowed.
+    owner: omniseed-ecosystem
