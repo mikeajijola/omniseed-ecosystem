@@ -9,14 +9,42 @@ import { runConformance } from "../src/index.js";
 import Ajv2020 from "ajv/dist/2020.js";
 
 const workspace = resolve(new URL("../..", import.meta.url).pathname);
-const products = existsSync(join(workspace, "omniform")) ? workspace : resolve(workspace, "..");
+const detectedProducts = existsSync(join(workspace, "omniform")) ? workspace : resolve(workspace, "..");
+const products = resolve(process.env.OMNISEED_PRODUCTS_ROOT ?? detectedProducts);
+const defaultCompany = existsSync(join(products, "omniseed-ecosystem-company")) ? join(products, "omniseed-ecosystem-company") : join(products, "..", "omniseed-ecosystem-company");
+const canonicalCompany = resolve(process.env.OMNISEED_COMPANY_REPOSITORY ?? defaultCompany);
+const githubProvider = existsSync(join(products, "provider-github")) ? join(products, "provider-github") : join(products, "omniseed-provider-github");
 
 test("current ecosystem emits a valid report with no deterministic failures", async () => {
-  const report = await runConformance({ output: false });
+  const report = await runConformance({ omniform: join(products, "omniform"), engine: join(products, "omniseed"), os: join(products, "omniseedos"), company: canonicalCompany, githubProvider, output: false });
   assert.equal(report.summary.failed, 0);
   assert.ok(report.summary.passed >= 15);
   assert.ok(report.summary.notAutomated >= 1);
-  assert.equal(report.findings.length, 36);
+  assert.equal(report.findings.length, 40);
+});
+
+test("company without PR-governed Git authority fails COMPANY-001", async () => {
+  const fixture = await companyFixture("company-authority", source => source.replace(/  governance:\n[\s\S]*?(?=  stewardship:)/, ""));
+  const finding = (await runConformance({ company: fixture, output: false })).findings.find(item => item.invariant === "COMPANY-001");
+  assert.equal(finding.status, "failed"); assert.match(finding.evidence, /desired-state authority/i);
+});
+
+test("realisation participant outside primitive resources fails COMPANY-002", async () => {
+  const fixture = await companyFixture("company-trace", source => source.replace("resource: lily, role: steward", "resource: invented_actor, role: steward"));
+  const finding = (await runConformance({ company: fixture, output: false })).findings.find(item => item.invariant === "COMPANY-002");
+  assert.equal(finding.status, "failed"); assert.match(finding.evidence, /missing primitive resource/i);
+});
+
+test("stewardship without an Agent participant fails COMPANY-003", async () => {
+  const fixture = await companyFixture("company-steward", source => source.replace("resource: lily, role: steward", "resource: stewardship_skills, role: steward"));
+  const finding = (await runConformance({ company: fixture, output: false })).findings.find(item => item.invariant === "COMPANY-003");
+  assert.equal(finding.status, "failed"); assert.match(finding.evidence, /agents-family participant/i);
+});
+
+test("mandatory OmniSeed OS fails COMPANY-004", async () => {
+  const fixture = await companyFixture("company-os", source => source.replace("optional: true, deploymentProvider", "optional: false, deploymentProvider"));
+  const finding = (await runConformance({ company: fixture, output: false })).findings.find(item => item.invariant === "COMPANY-004");
+  assert.equal(finding.status, "failed"); assert.match(finding.evidence, /optional primitive participant/i);
 });
 
 test("reverse runtime dependency fails ARCH-001 with inspectable evidence", async () => {
@@ -60,6 +88,26 @@ test("missing exact governed Company Change boundary fails ENGINE-010", async ()
   assert.match(finding.evidence, /stale/i);
 });
 
+test("Provider apply outside the Engine and governed Git adapter fails ENGINE-001", async () => {
+  const fixture = await engineFixture("uncontrolled-provider-apply");
+  await writeFile(join(fixture, "src/backdoor.js"), "export async function mutate(provider, action) { return provider.apply(action); }\n");
+  commitFixture(fixture);
+  const finding = (await runConformance({ engine: fixture, output: false })).findings.find(item => item.invariant === "ENGINE-001");
+  assert.equal(finding.status, "failed");
+  assert.match(finding.evidence, /src\/backdoor\.js/);
+});
+
+test("vendor SDK dependency fails ENGINE-006 while portable YAML formatting remains allowed", async () => {
+  const fixture = await engineFixture("vendor-engine-dependency");
+  const manifestPath = join(fixture, "package.json"), manifest = JSON.parse(await readFile(manifestPath, "utf8"));
+  manifest.dependencies["@octokit/rest"] = "^22.0.0";
+  await writeFile(manifestPath, JSON.stringify(manifest));
+  commitFixture(fixture);
+  const finding = (await runConformance({ engine: fixture, output: false })).findings.find(item => item.invariant === "ENGINE-006");
+  assert.equal(finding.status, "failed");
+  assert.match(finding.evidence, /@octokit\/rest/);
+});
+
 test("missing GitHub Provider manifest fails PROVIDER-001", async () => {
   const fixture = await mkdtemp(join(tmpdir(), "omniseed-provider-conformance-"));
   await writeFile(join(fixture, "package.json"), JSON.stringify({ name: "fixture-provider", version: "0.0.0" }));
@@ -74,7 +122,7 @@ test("missing GitHub Provider manifest fails PROVIDER-001", async () => {
 
 test("removed Provider primitive family fails PRIM-001", async () => {
   const fixture = await mkdtemp(join(tmpdir(), "omniseed-provider-family-conformance-"));
-  await cp(join(products, "omniseed-provider-github"), fixture, { recursive: true, filter: source => !source.includes("/.git") && !source.includes("/__pycache__") });
+  await cp(githubProvider, fixture, { recursive: true, filter: source => !source.includes("/.git") && !source.includes("/__pycache__") });
   const manifestPath = join(fixture, "provider-package.json"), manifest = JSON.parse(await readFile(manifestPath, "utf8"));
   manifest.primitiveFamilies = ["systems"];
   await writeFile(manifestPath, JSON.stringify(manifest));
@@ -112,3 +160,23 @@ test("Provider manifest schema accepts multiple retained primitive families", as
   const manifest = { manifestVersion: "1.0", id: "multi_family", version: "1.0.0", engineCompatibility: "omniseed.provider.protocol/1.0", primitiveFamilies: ["connectors", "workflows", "observations"], operations: [], configurationSchema: "./configuration.schema.json", observationTypes: [], evidenceTypes: [], permissions: [] };
   assert.equal(validate(manifest), true);
 });
+
+async function companyFixture(name, mutate) {
+  const fixture = await mkdtemp(join(tmpdir(), `${name}-`));
+  await cp(canonicalCompany, fixture, { recursive: true, filter: source => !source.includes("/.git") });
+  const path = join(fixture, "omniform.yaml"); await writeFile(path, mutate(await readFile(path, "utf8")));
+  execFileSync("git", ["init", "-q", fixture]); execFileSync("git", ["-C", fixture, "add", "."]); execFileSync("git", ["-C", fixture, "-c", "user.name=Conformance Test", "-c", "user.email=test@example.invalid", "commit", "-qm", "fixture"]);
+  return fixture;
+}
+
+async function engineFixture(name) {
+  const fixture = await mkdtemp(join(tmpdir(), `${name}-`));
+  await cp(join(products, "omniseed"), fixture, { recursive: true, filter: source => !source.includes("/.git") && !source.includes("/node_modules") });
+  return fixture;
+}
+
+function commitFixture(fixture) {
+  execFileSync("git", ["init", "-q", fixture]);
+  execFileSync("git", ["-C", fixture, "add", "."]);
+  execFileSync("git", ["-C", fixture, "-c", "user.name=Conformance Test", "-c", "user.email=test@example.invalid", "commit", "-qm", "fixture"]);
+}

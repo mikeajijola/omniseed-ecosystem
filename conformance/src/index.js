@@ -14,6 +14,7 @@ export async function runConformance(options = {}) {
     omniform: resolve(options.omniform ?? defaultRepository("omniform")),
     omniseed: resolve(options.engine ?? defaultRepository("omniseed")),
     omniseedos: resolve(options.os ?? defaultRepository("omniseedos")),
+    ...(companyRepository(options.company) ? { company: companyRepository(options.company) } : {}),
     ...(providerRepository(options.githubProvider) ? { githubProvider: providerRepository(options.githubProvider) } : {})
   };
   const catalogue = parse(await readFile(join(root, "constitution/invariants.yaml"), "utf8"));
@@ -71,13 +72,19 @@ function providerRepository(explicit) {
   return existsSync(candidate) ? candidate : null;
 }
 
+function companyRepository(explicit) {
+  if (explicit) return resolve(explicit);
+  const candidate = resolve(root, "..", "omniseed-ecosystem-company");
+  return existsSync(candidate) ? candidate : null;
+}
+
 async function buildContext(roots, compatibility) {
   const repositories = {};
   for (const [name, path] of Object.entries(roots)) {
     repositories[name] = {
       name,
       path,
-      manifest: JSON.parse(await readFile(join(path, "package.json"), "utf8")),
+      manifest: existsSync(join(path, "package.json")) ? JSON.parse(await readFile(join(path, "package.json"), "utf8")) : null,
       read: file => readFile(join(path, file), "utf8"),
       files: await sourceFiles(path)
     };

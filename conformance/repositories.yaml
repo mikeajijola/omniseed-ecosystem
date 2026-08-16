@@ -4,3 +4,4 @@ repositories:
   engine: ./omniseed
   os: ./omniseedos
   github_provider: ../omniseed-provider-github
+  ecosystem_company: ../omniseed-ecosystem-company
