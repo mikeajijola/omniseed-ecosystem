@@ -9,13 +9,14 @@ import { runConformance } from "../src/index.js";
 import Ajv2020 from "ajv/dist/2020.js";
 
 const workspace = resolve(new URL("../..", import.meta.url).pathname);
-const products = existsSync(join(workspace, "omniform")) ? workspace : resolve(workspace, "..");
+const detectedProducts = existsSync(join(workspace, "omniform")) ? workspace : resolve(workspace, "..");
+const products = resolve(process.env.OMNISEED_PRODUCTS_ROOT ?? detectedProducts);
 const defaultCompany = existsSync(join(products, "omniseed-ecosystem-company")) ? join(products, "omniseed-ecosystem-company") : join(products, "..", "omniseed-ecosystem-company");
 const canonicalCompany = resolve(process.env.OMNISEED_COMPANY_REPOSITORY ?? defaultCompany);
 const githubProvider = existsSync(join(products, "provider-github")) ? join(products, "provider-github") : join(products, "omniseed-provider-github");
 
 test("current ecosystem emits a valid report with no deterministic failures", async () => {
-  const report = await runConformance({ company: canonicalCompany, githubProvider, output: false });
+  const report = await runConformance({ omniform: join(products, "omniform"), engine: join(products, "omniseed"), os: join(products, "omniseedos"), company: canonicalCompany, githubProvider, output: false });
   assert.equal(report.summary.failed, 0);
   assert.ok(report.summary.passed >= 15);
   assert.ok(report.summary.notAutomated >= 1);
@@ -87,6 +88,26 @@ test("missing exact governed Company Change boundary fails ENGINE-010", async ()
   assert.match(finding.evidence, /stale/i);
 });
 
+test("Provider apply outside the Engine and governed Git adapter fails ENGINE-001", async () => {
+  const fixture = await engineFixture("uncontrolled-provider-apply");
+  await writeFile(join(fixture, "src/backdoor.js"), "export async function mutate(provider, action) { return provider.apply(action); }\n");
+  commitFixture(fixture);
+  const finding = (await runConformance({ engine: fixture, output: false })).findings.find(item => item.invariant === "ENGINE-001");
+  assert.equal(finding.status, "failed");
+  assert.match(finding.evidence, /src\/backdoor\.js/);
+});
+
+test("vendor SDK dependency fails ENGINE-006 while portable YAML formatting remains allowed", async () => {
+  const fixture = await engineFixture("vendor-engine-dependency");
+  const manifestPath = join(fixture, "package.json"), manifest = JSON.parse(await readFile(manifestPath, "utf8"));
+  manifest.dependencies["@octokit/rest"] = "^22.0.0";
+  await writeFile(manifestPath, JSON.stringify(manifest));
+  commitFixture(fixture);
+  const finding = (await runConformance({ engine: fixture, output: false })).findings.find(item => item.invariant === "ENGINE-006");
+  assert.equal(finding.status, "failed");
+  assert.match(finding.evidence, /@octokit\/rest/);
+});
+
 test("missing GitHub Provider manifest fails PROVIDER-001", async () => {
   const fixture = await mkdtemp(join(tmpdir(), "omniseed-provider-conformance-"));
   await writeFile(join(fixture, "package.json"), JSON.stringify({ name: "fixture-provider", version: "0.0.0" }));
@@ -146,4 +167,16 @@ async function companyFixture(name, mutate) {
   const path = join(fixture, "omniform.yaml"); await writeFile(path, mutate(await readFile(path, "utf8")));
   execFileSync("git", ["init", "-q", fixture]); execFileSync("git", ["-C", fixture, "add", "."]); execFileSync("git", ["-C", fixture, "-c", "user.name=Conformance Test", "-c", "user.email=test@example.invalid", "commit", "-qm", "fixture"]);
   return fixture;
+}
+
+async function engineFixture(name) {
+  const fixture = await mkdtemp(join(tmpdir(), `${name}-`));
+  await cp(join(products, "omniseed"), fixture, { recursive: true, filter: source => !source.includes("/.git") && !source.includes("/node_modules") });
+  return fixture;
+}
+
+function commitFixture(fixture) {
+  execFileSync("git", ["init", "-q", fixture]);
+  execFileSync("git", ["-C", fixture, "add", "."]);
+  execFileSync("git", ["-C", fixture, "-c", "user.name=Conformance Test", "-c", "user.email=test@example.invalid", "commit", "-qm", "fixture"]);
 }

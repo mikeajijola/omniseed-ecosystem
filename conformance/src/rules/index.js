@@ -95,7 +95,21 @@ async function controlledMutationPath({ repositories }) {
   const expected = ["async plan(", "async approve(", "async apply(", "provider.apply(action)"];
   const missing = expected.filter(text => !engine.includes(text));
   if (missing.length) return fail("omniseed", `Controlled mutation markers missing: ${missing.join(", ")}`);
-  const providerApplyCalls = await occurrences(repositories.omniseed, /\.apply\(action/g, ["src/engine.js", "src/provider.js", "src/provider-protocol.js"]);
+  const allowedFiles = ["src/engine.js", "src/provider.js", "src/provider-protocol.js"];
+  if (repositories.omniseed.files.includes("src/company-repository.js")) {
+    const repository = await repositories.omniseed.read("src/company-repository.js");
+    const governedRepositoryMarkers = [
+      engine.includes("companyRepository.submit"),
+      engine.includes("async applyCompanyChange(") && engine.includes("authorize(authorization, proposal.requiredAuthority.apply)"),
+      repository.includes("this.provider.validate(action)"),
+      repository.includes("this.provider.plan(action)"),
+      repository.includes("this.provider.apply(action)"),
+      repository.includes("this.provider.observe(resource)")
+    ];
+    if (!governedRepositoryMarkers.every(Boolean)) return fail("omniseed", "Git company repository mutation is not demonstrably reached through approved Company Change apply and the complete Provider lifecycle.");
+    allowedFiles.push("src/company-repository.js");
+  }
+  const providerApplyCalls = await occurrences(repositories.omniseed, /\.apply\(action/g, allowedFiles);
   return providerApplyCalls.length ? fail("omniseed", `Provider apply is called outside engine apply: ${providerApplyCalls.join(", ")}`) : pass("Provider apply is reached through the engine plan/approve/apply lifecycle.");
 }
 
@@ -205,9 +219,9 @@ async function missingProviderGap({ repositories }) {
 }
 
 function engineNoVendorSdk({ repositories }) {
-  const allowed = new Set(["@omniseed/omniform"]);
+  const allowed = new Set(["@omniseed/omniform", "yaml"]);
   const dependencies = [...allDependencies(repositories.omniseed.manifest)].filter(name => !allowed.has(name));
-  return dependencies.length ? fail("omniseed", `Engine runtime dependencies outside the portable Omniform contract: ${dependencies.join(", ")}`) : pass("Engine runtime dependencies contain only the portable Omniform package.");
+  return dependencies.length ? fail("omniseed", `Engine runtime dependencies include vendor or non-portable packages: ${dependencies.join(", ")}`) : pass("Engine runtime dependencies contain only Omniform and the vendor-neutral YAML document formatter.");
 }
 
 async function evidenceProvenance({ repositories }) {
