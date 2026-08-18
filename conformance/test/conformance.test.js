@@ -43,7 +43,11 @@ test("stewardship without an Agent participant fails COMPANY-003", async () => {
 });
 
 test("mandatory OmniSeed OS fails COMPANY-004", async () => {
-  const fixture = await companyFixture("company-os", source => source.replace("optional: true, deploymentProvider", "optional: false, deploymentProvider"));
+  const fixture = await companyFixture("company-os", source => {
+    const changed = source.replace(/(\n\s+optional:) true\b/, "$1 false");
+    assert.notEqual(changed, source, "fixture must make OmniSeed OS mandatory");
+    return changed;
+  });
   const finding = (await runConformance({ company: fixture, output: false })).findings.find(item => item.invariant === "COMPANY-004");
   assert.equal(finding.status, "failed"); assert.match(finding.evidence, /optional primitive participant/i);
 });

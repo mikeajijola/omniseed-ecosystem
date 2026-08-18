@@ -1,30 +1,34 @@
 {
   "ecosystemVersion": "1",
-  "generatedAt": "2026-08-16T07:25:52.132Z",
+  "generatedAt": "2026-08-18T09:38:30.075Z",
   "repositories": {
     "omniform": {
-      "commit": "0d06b1134ffa3d9810f04a8889850ba108d84877",
+      "commit": "38f97569edfca0448bd044141bbd9825595d17c7",
       "path": "../omniform"
     },
     "omniseed": {
-      "commit": "58ec80a05f41c51c33087d20847172cafd25405e",
+      "commit": "3c1f090884b8fdbd890e21630be5e489bab36512",
       "path": "../omniseed"
     },
     "omniseedos": {
-      "commit": "c186400f518c8b94231910799af2dd644bf9df7a",
+      "commit": "474b63c9f6dcd9050300e82574c237241605b67d",
       "path": "../omniseedos"
     },
     "company": {
-      "commit": "aa558ba8d4ecb03f95997204749fbad5d51c3ae8",
+      "commit": "5dcc50813cdefe338290120aff55555fc8dc439a",
       "path": "../omniseed-ecosystem-company"
     },
     "githubProvider": {
-      "commit": "016deebf1af7049963bab92407642fbd0e283e41",
+      "commit": "0189b0f636cc69ff8cf2a1a95bd3dde54785bbfb",
       "path": "../omniseed-provider-github"
+    },
+    "vercelProvider": {
+      "commit": "63b352e9ff0821fa71b6790cde307a10f6f18668",
+      "path": "../omniseed-provider-vercel"
     }
   },
   "summary": {
-    "passed": 31,
+    "passed": 32,
     "failed": 0,
     "warnings": 0,
     "notAutomated": 10
@@ -357,6 +361,14 @@
       "repository": "omniform,omniseed,omniseedos,githubProvider",
       "evidence": "This invariant requires semantic or future behavioral review.",
       "test": "provider-organisation-semantic-review"
+    },
+    {
+      "invariant": "PROVIDER-003",
+      "status": "passed",
+      "severity": "critical",
+      "repository": "provider-packages",
+      "evidence": "Active Provider package manifests declare unique canonical IDs: github (githubProvider), vercel (vercelProvider).",
+      "test": "unique-provider-manifest-id"
     }
   ]
 }
