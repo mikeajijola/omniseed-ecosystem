@@ -21,7 +21,7 @@ test("current ecosystem emits a valid report with no deterministic failures", as
   assert.equal(report.summary.failed, 0);
   assert.ok(report.summary.passed >= 15);
   assert.ok(report.summary.notAutomated >= 1);
-  assert.equal(report.findings.length, 43);
+  assert.equal(report.findings.length, 44);
 });
 
 test("company without PR-governed Git authority fails COMPANY-001", async () => {
@@ -139,6 +139,21 @@ test("missing GitHub Provider manifest fails PROVIDER-001", async () => {
   assert.match(finding.evidence, /manifest/i);
 });
 
+test("Provider without supplying organisation and product metadata fails PROVIDER-004", async () => {
+  const fixture = await mkdtemp(join(tmpdir(), "omniseed-provider-metadata-"));
+  await cp(githubProvider, fixture, { recursive: true, filter: source => !source.includes("/.git") && !source.includes("/__pycache__") });
+  const manifestPath = join(fixture, "provider-package.json"), manifest = JSON.parse(await readFile(manifestPath, "utf8"));
+  delete manifest.organisation;
+  delete manifest.implementations;
+  await writeFile(manifestPath, JSON.stringify(manifest));
+  execFileSync("git", ["init", "-q", fixture]);
+  execFileSync("git", ["-C", fixture, "add", "."]);
+  execFileSync("git", ["-C", fixture, "-c", "user.name=Conformance Test", "-c", "user.email=test@example.invalid", "commit", "-qm", "fixture"]);
+  const finding = (await runConformance({ githubProvider: fixture, output: false })).findings.find(item => item.invariant === "PROVIDER-004");
+  assert.equal(finding.status, "failed");
+  assert.match(finding.evidence, /organisation|implementations/);
+});
+
 test("removed Provider primitive family fails PRIM-001", async () => {
   const fixture = await mkdtemp(join(tmpdir(), "omniseed-provider-family-conformance-"));
   await cp(githubProvider, fixture, { recursive: true, filter: source => !source.includes("/.git") && !source.includes("/__pycache__") });
@@ -176,7 +191,7 @@ test("hard-coded Company Search family selection fails CAP-003", async () => {
 test("Provider manifest schema accepts multiple retained primitive families", async () => {
   const schema = JSON.parse(await readFile(join(workspace, "providers/provider-package.schema.json"), "utf8"));
   const validate = new Ajv2020({ strict: true }).compile(schema);
-  const manifest = { manifestVersion: "1.0", id: "multi_family", version: "1.0.0", engineCompatibility: "omniseed.provider.protocol/1.0", primitiveFamilies: ["connectors", "workflows", "observations"], operations: [], configurationSchema: "./configuration.schema.json", observationTypes: [], evidenceTypes: [], permissions: [] };
+  const manifest = { manifestVersion: "1.0", id: "multi_family", organisation: "Example Organisation", version: "1.0.0", engineCompatibility: "omniseed.provider.protocol/1.0", primitiveFamilies: ["connectors", "workflows", "observations"], implementations: [{ family: "connectors", products: ["Connector Product"] }, { family: "workflows", products: ["Workflow Product"] }, { family: "observations", products: ["Observation Product"] }], operations: [], configurationSchema: "./configuration.schema.json", observationTypes: [], evidenceTypes: [], permissions: [] };
   assert.equal(validate(manifest), true);
 });
 

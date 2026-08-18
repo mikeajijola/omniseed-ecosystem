@@ -387,3 +387,12 @@ invariants:
     test: unique-provider-manifest-id
     remediation: Consolidate primitive-family implementations beneath one Provider package manifest for the supplying organisation; product adapters without Provider manifests remain allowed.
     owner: omniseed-ecosystem
+  - id: PROVIDER-004
+    principle: PROVIDER_TRUTH
+    description: Every active Provider manifest explicitly identifies its supplying organisation and the products used beneath each supported primitive family.
+    severity: critical
+    scope: [provider-packages]
+    deterministic: true
+    test: provider-organisation-metadata
+    remediation: Add organisation and per-family product metadata, ensure every supported family has exactly one implementation entry, and submit the supplying boundary for semantic review.
+    owner: omniseed-ecosystem

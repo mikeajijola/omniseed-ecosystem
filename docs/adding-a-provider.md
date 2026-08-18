@@ -10,7 +10,7 @@ the governance runner extensible without adding product-specific CLI flags.
 
 A Provider is a replaceable way to realise part of a company. A package name or vendor is not the Capability itself.
 
-Every Provider package publishes a static manifest that validates against [`providers/provider-package.schema.json`](../providers/provider-package.schema.json). The manifest declares what the package can support. It contains no credentials, tenant settings, runtime health, installation claim, or current connection state.
+Every Provider package publishes a static manifest that validates against [`providers/provider-package.schema.json`](../providers/provider-package.schema.json). The manifest declares the supplying organisation, canonical Provider ID, supported primitive families, and the products/services used beneath each family. It contains no credentials, tenant settings, runtime health, installation claim, or current connection state.
 
 Discovery means that a candidate exists. It does not install, configure, approve, or trust that candidate.
 
