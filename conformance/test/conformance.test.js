@@ -179,6 +179,26 @@ test("duplicate active Provider package manifests fail PROVIDER-003 with both pa
   assert.match(finding.evidence, /vercelProvider/);
 });
 
+test("additional Provider repositories participate in manifest identity and primitive-family conformance", async () => {
+  const fixture = await mkdtemp(join(tmpdir(), "omniseed-additional-provider-"));
+  await writeFile(join(fixture, "provider-package.json"), JSON.stringify({
+    manifestVersion: "1.0", id: "omnicede", version: "0.1.0",
+    engineCompatibility: "omniseed.provider.protocol/1.0", primitiveFamilies: ["systems"],
+    operations: [], configurationSchema: "./provider-configuration.schema.json",
+    observationTypes: [], evidenceTypes: [], permissions: []
+  }));
+  await writeFile(join(fixture, "provider-configuration.schema.json"), JSON.stringify({ type: "object" }));
+  execFileSync("git", ["init", "-q", fixture]);
+  execFileSync("git", ["-C", fixture, "add", "."]);
+  execFileSync("git", ["-C", fixture, "-c", "user.name=Conformance Test", "-c", "user.email=test@example.invalid", "commit", "-qm", "fixture"]);
+  const report = await runConformance({ providers: { omnicede: fixture }, output: false });
+  assert.equal(report.repositories.provider_omnicede.path.endsWith("omniseed-additional-provider-"), false);
+  const finding = report.findings.find(item => item.invariant === "PRIM-001");
+  assert.equal(finding.status, "failed");
+  assert.match(finding.evidence, /provider_omnicede/);
+  assert.match(finding.evidence, /systems/);
+});
+
 async function companyFixture(name, mutate) {
   const fixture = await mkdtemp(join(tmpdir(), `${name}-`));
   await cp(canonicalCompany, fixture, { recursive: true, filter: source => !source.includes("/.git") });

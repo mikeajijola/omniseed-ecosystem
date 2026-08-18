@@ -1,6 +1,6 @@
 {
   "ecosystemVersion": "1",
-  "generatedAt": "2026-08-18T09:38:30.075Z",
+  "generatedAt": "2026-08-18T10:10:27.160Z",
   "repositories": {
     "omniform": {
       "commit": "38f97569edfca0448bd044141bbd9825595d17c7",
@@ -11,7 +11,7 @@
       "path": "../omniseed"
     },
     "omniseedos": {
-      "commit": "474b63c9f6dcd9050300e82574c237241605b67d",
+      "commit": "6b3b9c462e1bb706e0ff50550568b77a8ad892f6",
       "path": "../omniseedos"
     },
     "company": {
@@ -25,6 +25,10 @@
     "vercelProvider": {
       "commit": "63b352e9ff0821fa71b6790cde307a10f6f18668",
       "path": "../omniseed-provider-vercel"
+    },
+    "provider_omnicede": {
+      "commit": "ef357be679fed3cb120ae037ae062829de8cf970",
+      "path": "../omnicede"
     }
   },
   "summary": {
@@ -87,7 +91,7 @@
       "status": "passed",
       "severity": "critical",
       "repository": "omniform,githubProvider",
-      "evidence": "Omniform and Provider contracts expose exactly the ten canonical primitive families and the GitHub Provider advertises only retained families.",
+      "evidence": "Omniform and Provider contracts expose exactly the ten canonical primitive families and every inspected Provider advertises only retained families.",
       "test": "canonical-primitive-vocabulary"
     },
     {
@@ -367,7 +371,7 @@
       "status": "passed",
       "severity": "critical",
       "repository": "provider-packages",
-      "evidence": "Active Provider package manifests declare unique canonical IDs: github (githubProvider), vercel (vercelProvider).",
+      "evidence": "Active Provider package manifests declare unique canonical IDs: github (githubProvider), vercel (vercelProvider), omnicede (provider_omnicede).",
       "test": "unique-provider-manifest-id"
     }
   ]

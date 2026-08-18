@@ -4,6 +4,10 @@ Read the authoritative [Provider semantics](provider-semantics.md) first. A Prov
 
 Before creating a Provider, identify the supplying organisation. If the proposed Provider is merely a product, service, framework, SDK, or feature of an existing Provider organisation, do not create a new Provider. Model it as an implementation/product beneath that Provider.
 
+Include additional Provider repositories in ecosystem conformance with
+`--provider canonical_id=/absolute/path`. The option is repeatable; it keeps
+the governance runner extensible without adding product-specific CLI flags.
+
 A Provider is a replaceable way to realise part of a company. A package name or vendor is not the Capability itself.
 
 Every Provider package publishes a static manifest that validates against [`providers/provider-package.schema.json`](../providers/provider-package.schema.json). The manifest declares what the package can support. It contains no credentials, tenant settings, runtime health, installation claim, or current connection state.

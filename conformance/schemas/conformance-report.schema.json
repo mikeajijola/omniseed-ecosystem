@@ -19,6 +19,9 @@
         "company": { "$ref": "#/$defs/repository" },
         "githubProvider": { "$ref": "#/$defs/repository" },
         "vercelProvider": { "$ref": "#/$defs/repository" }
+      },
+      "patternProperties": {
+        "^provider_[a-z][a-z0-9_]*$": { "$ref": "#/$defs/repository" }
       }
     },
     "summary": {
