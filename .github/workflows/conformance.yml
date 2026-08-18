@@ -41,13 +41,32 @@ jobs:
         uses: actions/checkout@v7
         with:
           repository: mikeajijola/omniseed-provider-github
+          ref: 73aa6a1d088a24230fba42dc894d723752b1736c
           path: omniseed-provider-github
       - name: Check out Vercel Provider
         uses: actions/checkout@v7
         with:
           repository: mikeajijola/omniseed-provider-vercel
-          ref: 89c5c2e74c3f71b8e937ae0334141f9c9dfddefc
+          ref: 6a65f743db11b72fb95c612766b69813ea33c0da
           path: omniseed-provider-vercel
+      - name: Check out Neon Provider
+        uses: actions/checkout@v7
+        with:
+          repository: mikeajijola/omniseed-provider-neon
+          ref: b8cc57f9411d0cd52732be267b75d4b1da1188f2
+          path: omniseed-provider-neon
+      - name: Check out OmniSeed Provider
+        uses: actions/checkout@v7
+        with:
+          repository: mikeajijola/omniseed-provider-omniseed
+          ref: bfa20da6f2e69e183c491b146897c0afd16344fa
+          path: omniseed-provider-omniseed
+      - name: Check out Omnicede Provider
+        uses: actions/checkout@v7
+        with:
+          repository: mikeajijola/omnicede
+          ref: 20681f2c942c8a6d3bd23b693105992a08e69c3e
+          path: omnicede
       - name: Check out OmniSeed Ecosystem company
         uses: actions/checkout@v7
         with:
@@ -81,6 +100,9 @@ jobs:
           --os ../omniseedos
           --github-provider ../omniseed-provider-github
           --vercel-provider ../omniseed-provider-vercel
+          --provider neon=../omniseed-provider-neon
+          --provider omniseed=../omniseed-provider-omniseed
+          --provider omnicede=../omnicede
           --company ../omniseed-ecosystem-company
           --report-kind mainline
           --freshness current

@@ -32,6 +32,7 @@ export const ruleTests = {
   "stable-authority-ids": stableAuthorityIds,
   "github-provider-manifest": githubProviderManifest,
   "unique-provider-manifest-id": uniqueProviderManifestId,
+  "provider-organisation-metadata": providerOrganisationMetadata,
   "canonical-primitive-vocabulary": canonicalPrimitiveVocabulary,
   "independent-provider-selection": independentProviderSelection,
   "company-search-capability-boundary": companySearchCapabilityBoundary,
@@ -395,6 +396,26 @@ async function uniqueProviderManifestId({ repositories }) {
   const duplicates = declarations.filter(item => counts.get(item.id) > 1);
   if (duplicates.length) return fail("provider-packages", `Duplicate canonical Provider manifest ID declarations: ${duplicates.map(item => `${item.id} at ${item.repository}:${item.path}`).join(", ")}`);
   return pass(`Active Provider package manifests declare unique canonical IDs: ${declarations.map(item => `${item.id} (${item.repository})`).join(", ")}.`);
+}
+
+async function providerOrganisationMetadata({ root, repositories }) {
+  const schema = JSON.parse(await readFile(join(root, "providers/provider-package.schema.json"), "utf8"));
+  const validate = new Ajv2020({ allErrors: true, strict: true }).compile(schema);
+  const inspected = [];
+  for (const [name, repository] of Object.entries(repositories)) {
+    if (!repository.files.includes("provider-package.json")) continue;
+    let manifest;
+    try { manifest = JSON.parse(await repository.read("provider-package.json")); }
+    catch (error) { return fail(name, `Provider manifest cannot be inspected: ${error.message}`); }
+    if (!validate(manifest)) return fail(name, `Provider manifest does not match the ecosystem schema: ${validate.errors.map(item => `${item.instancePath || "$"} ${item.message}`).join("; ")}`);
+    const implementationFamilies = manifest.implementations.map(item => item.family);
+    const missing = manifest.primitiveFamilies.filter(family => !implementationFamilies.includes(family));
+    const duplicated = implementationFamilies.filter((family, index) => implementationFamilies.indexOf(family) !== index);
+    const extra = implementationFamilies.filter(family => !manifest.primitiveFamilies.includes(family));
+    if (missing.length || duplicated.length || extra.length) return fail(name, `Provider implementation metadata does not match supported families: missing=${missing.join(",") || "none"}; duplicated=${[...new Set(duplicated)].join(",") || "none"}; extra=${extra.join(",") || "none"}`);
+    inspected.push(`${manifest.id} supplied by ${manifest.organisation}`);
+  }
+  return inspected.length ? pass(`Provider manifests explicitly declare supplying organisations and per-family products: ${inspected.join("; ")}.`) : fail("provider-packages", "No active Provider manifests were inspected.");
 }
 
 async function canonicalPrimitiveVocabulary({ root, repositories }) {
