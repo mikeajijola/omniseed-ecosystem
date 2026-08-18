@@ -369,12 +369,13 @@ async function canonicalPrimitiveVocabulary({ root, repositories }) {
   const manifestFamilies = providerSchema.properties?.primitiveFamilies?.items?.enum;
   if (JSON.stringify(formFamilies) !== JSON.stringify(canonicalPrimitiveFamilies)) return fail("omniform", `Omniform primitive families differ from the canonical ten: ${JSON.stringify(formFamilies)}`);
   if (JSON.stringify(manifestFamilies) !== JSON.stringify(canonicalPrimitiveFamilies)) return fail("omniseed-ecosystem", `Provider manifest vocabulary differs from the canonical ten: ${JSON.stringify(manifestFamilies)}`);
-  if (repositories.githubProvider) {
-    const manifest = JSON.parse(await repositories.githubProvider.read("provider-package.json"));
+  for (const [name, repository] of Object.entries(repositories)) {
+    if (!repository.files.includes("provider-package.json")) continue;
+    const manifest = JSON.parse(await repository.read("provider-package.json"));
     const obsolete = manifest.primitiveFamilies.filter(family => !canonicalPrimitiveFamilies.includes(family));
-    if (obsolete.length) return fail("githubProvider", `Provider advertises removed or unknown primitive families: ${obsolete.join(", ")}`);
+    if (obsolete.length) return fail(name, `${name} advertises removed or unknown primitive families: ${obsolete.join(", ")}`);
   }
-  return pass("Omniform and Provider contracts expose exactly the ten canonical primitive families and the GitHub Provider advertises only retained families.");
+  return pass("Omniform and Provider contracts expose exactly the ten canonical primitive families and every inspected Provider advertises only retained families.");
 }
 
 async function independentProviderSelection({ repositories }) {

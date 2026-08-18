@@ -10,13 +10,18 @@ import { ruleTests } from "./rules/index.js";
 const root = resolve(new URL("../..", import.meta.url).pathname);
 
 export async function runConformance(options = {}) {
+  const additionalProviders = Object.fromEntries(Object.entries(options.providers ?? {}).map(([name, path]) => {
+    if (!/^[a-z][a-z0-9_]*$/.test(name)) throw new Error(`Invalid Provider repository key: ${name}`);
+    return [`provider_${name}`, resolve(path)];
+  }));
   const roots = {
     omniform: resolve(options.omniform ?? defaultRepository("omniform")),
     omniseed: resolve(options.engine ?? defaultRepository("omniseed")),
     omniseedos: resolve(options.os ?? defaultRepository("omniseedos")),
     ...(companyRepository(options.company) ? { company: companyRepository(options.company) } : {}),
     ...(providerRepository("omniseed-provider-github", options.githubProvider) ? { githubProvider: providerRepository("omniseed-provider-github", options.githubProvider) } : {}),
-    ...(providerRepository("omniseed-provider-vercel", options.vercelProvider) ? { vercelProvider: providerRepository("omniseed-provider-vercel", options.vercelProvider) } : {})
+    ...(providerRepository("omniseed-provider-vercel", options.vercelProvider) ? { vercelProvider: providerRepository("omniseed-provider-vercel", options.vercelProvider) } : {}),
+    ...additionalProviders
   };
   const catalogue = parse(await readFile(join(root, "constitution/invariants.yaml"), "utf8"));
   const compatibility = parse(await readFile(join(root, "compatibility/packages.yaml"), "utf8"));
