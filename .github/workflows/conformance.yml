@@ -41,7 +41,7 @@ jobs:
         uses: actions/checkout@v7
         with:
           repository: mikeajijola/omniseed-provider-github
-          ref: 84318045e5c614f8674120e5996c535d2f8262c0
+          ref: 73aa6a1d088a24230fba42dc894d723752b1736c
           path: omniseed-provider-github
       - name: Check out Vercel Provider
         uses: actions/checkout@v7
