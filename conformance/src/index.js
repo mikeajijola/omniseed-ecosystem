@@ -2,6 +2,7 @@ import { execFileSync } from "node:child_process";
 import { readFile, readdir, mkdir, writeFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { dirname, join, relative, resolve } from "node:path";
+import { createHash } from "node:crypto";
 import Ajv2020 from "ajv/dist/2020.js";
 import addFormats from "ajv-formats";
 import { parse } from "yaml";
@@ -23,7 +24,9 @@ export async function runConformance(options = {}) {
     ...(providerRepository("omniseed-provider-vercel", options.vercelProvider) ? { vercelProvider: providerRepository("omniseed-provider-vercel", options.vercelProvider) } : {}),
     ...additionalProviders
   };
-  const catalogue = parse(await readFile(join(root, "constitution/invariants.yaml"), "utf8"));
+  const invariantsSource = await readFile(join(root, "constitution/invariants.yaml"), "utf8");
+  const catalogue = parse(invariantsSource);
+  const runner = JSON.parse(await readFile(join(root, "package.json"), "utf8"));
   const compatibility = parse(await readFile(join(root, "compatibility/packages.yaml"), "utf8"));
   const context = await buildContext(roots, compatibility);
   const findings = [];
@@ -46,10 +49,24 @@ export async function runConformance(options = {}) {
     }
   }
 
+  const repositoryRecords = Object.fromEntries(Object.entries(roots).map(([name, path]) => [name, repositoryRecord(path, root)]));
+  const governanceRecord = repositoryRecord(root, root);
+  const requestedFreshness = options.freshness ?? (options.reportKind === "candidate" ? "candidate" : "current");
+  const exactTree = governanceRecord.clean && Object.values(repositoryRecords).every(item => item.clean);
   const report = {
     ecosystemVersion: String(catalogue.version),
     generatedAt: new Date().toISOString(),
-    repositories: Object.fromEntries(Object.entries(roots).map(([name, path]) => [name, repositoryRecord(path, root)])),
+    reportKind: options.reportKind ?? "mainline",
+    freshness: exactTree ? requestedFreshness : "unknown",
+    governance: {
+      repository: "mikeajijola/omniseed-ecosystem",
+      commit: governanceRecord.commit,
+      clean: governanceRecord.clean,
+      constitutionVersion: String(catalogue.version),
+      invariantsDigest: `sha256:${createHash("sha256").update(invariantsSource).digest("hex")}`,
+      runnerVersion: runner.version
+    },
+    repositories: repositoryRecords,
     summary: {
       passed: findings.filter(item => item.status === "passed").length,
       failed: findings.filter(item => item.status === "failed").length,
@@ -60,7 +77,10 @@ export async function runConformance(options = {}) {
   };
   await validateReport(report);
   if (options.output !== false) {
-    const output = resolve(options.output ?? join(root, "reports/latest.json"));
+    if (report.reportKind === "candidate" && !options.output) throw new Error("Candidate reports require an explicit candidate output path");
+    const output = resolve(options.output ?? join(root, "reports/main/latest.json"));
+    const canonicalMainline = resolve(join(root, "reports/main/latest.json"));
+    if (report.reportKind === "candidate" && output === canonicalMainline) throw new Error("Candidate evidence cannot overwrite canonical mainline evidence");
     await mkdir(dirname(output), { recursive: true });
     await writeFile(output, `${JSON.stringify(report, null, 2)}\n`);
   }
@@ -121,6 +141,7 @@ async function sourceFiles(directory, base = directory) {
 function repositoryRecord(path, relativeTo) {
   return {
     commit: execFileSync("git", ["-C", path, "rev-parse", "HEAD"], { encoding: "utf8" }).trim(),
+    clean: execFileSync("git", ["-C", path, "status", "--porcelain"], { encoding: "utf8" }).trim() === "",
     path: relative(relativeTo, path) || "."
   };
 }

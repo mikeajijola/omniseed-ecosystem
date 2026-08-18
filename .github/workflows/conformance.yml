@@ -82,14 +82,16 @@ jobs:
           --github-provider ../omniseed-provider-github
           --vercel-provider ../omniseed-provider-vercel
           --company ../omniseed-ecosystem-company
-          --output reports/latest.json
+          --report-kind mainline
+          --freshness current
+          --output reports/main/latest.json
           --fail-on warning
         working-directory: omniseed-ecosystem
       - name: Upload conformance report
         uses: actions/upload-artifact@v7
         with:
           name: conformance-report
-          path: omniseed-ecosystem/reports/latest.json
+          path: omniseed-ecosystem/reports/main/latest.json
       - name: Configure Pages
         if: github.event_name != 'pull_request'
         uses: actions/configure-pages@v6
@@ -97,7 +99,7 @@ jobs:
         if: github.event_name != 'pull_request'
         run: |
           mkdir -p _site/conformance
-          cp reports/latest.json _site/conformance/latest.json
+          cp reports/main/latest.json _site/conformance/latest.json
           cp site/conformance/index.html _site/conformance/index.html
           cp site/index.html _site/index.html
         working-directory: omniseed-ecosystem

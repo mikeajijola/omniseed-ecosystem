@@ -4,10 +4,25 @@
   "title": "OmniSeed Ecosystem Conformance Report",
   "type": "object",
   "additionalProperties": false,
-  "required": ["ecosystemVersion", "generatedAt", "repositories", "summary", "findings"],
+  "required": ["ecosystemVersion", "generatedAt", "reportKind", "freshness", "governance", "repositories", "summary", "findings"],
   "properties": {
     "ecosystemVersion": { "type": "string", "const": "1" },
     "generatedAt": { "type": "string", "format": "date-time" },
+    "reportKind": { "enum": ["mainline", "candidate"] },
+    "freshness": { "enum": ["current", "stale", "candidate", "historical", "unknown"] },
+    "governance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["repository", "commit", "clean", "constitutionVersion", "invariantsDigest", "runnerVersion"],
+      "properties": {
+        "repository": { "type": "string", "const": "mikeajijola/omniseed-ecosystem" },
+        "commit": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
+        "clean": { "type": "boolean" },
+        "constitutionVersion": { "type": "string", "minLength": 1 },
+        "invariantsDigest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+        "runnerVersion": { "type": "string", "minLength": 1 }
+      }
+    },
     "repositories": {
       "type": "object",
       "additionalProperties": false,
@@ -44,9 +59,10 @@
     "repository": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["commit", "path"],
+      "required": ["commit", "clean", "path"],
       "properties": {
         "commit": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
+        "clean": { "type": "boolean" },
         "path": { "type": "string", "minLength": 1 }
       }
     },
