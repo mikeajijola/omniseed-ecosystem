@@ -83,12 +83,12 @@ invariants:
     owner: omniseed
   - id: PRIM-004
     principle: PROVIDER_TRUTH
-    description: A Provider package may support multiple primitive families while company Provider selection remains independently configurable per family.
+    description: A Provider package may support multiple primitive families while Provider selection remains subordinate to each primitive instance; the family map is only a default.
     severity: critical
     scope: [omniform, omniseed]
     deterministic: true
     test: independent-provider-selection
-    remediation: Preserve the family-keyed Provider map and do not bind all families to one package-level selection.
+    remediation: Preserve family defaults and resource-level Provider selection so different primitive instances in one family can use different supplying organisations.
     owner: omniform
   - id: AGENT-003
     principle: CAPABILITY_PRIMARY
@@ -162,6 +162,15 @@ invariants:
     test: optional-os-realisation
     remediation: Model the OS under an operating Capability and make the UI project instance and steward binding from OmniSeed inspection.
     owner: omniseedos
+  - id: COMPANY-005
+    principle: CAPABILITY_PRIMARY
+    description: Production reconciliation is an ordinary company Capability realised through primitive composition and the governed plan, approval, apply, observation, and evidence operations; bootstrap receives no privileged lifecycle.
+    severity: critical
+    scope: [company, omniseed]
+    deterministic: true
+    test: ordinary-reconciliation-capability
+    remediation: Declare a reconciliation Capability and named Realisation using canonical primitive families, and expose only ordinary governed OmniSeed operations to its actors and interfaces.
+    owner: omniseed-ecosystem-company
   - id: ENGINE-001
     principle: DETERMINISTIC_MUTATION
     description: Controlled mutation routes through plan, approve, and apply.

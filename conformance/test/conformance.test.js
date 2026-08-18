@@ -21,7 +21,7 @@ test("current ecosystem emits a valid report with no deterministic failures", as
   assert.equal(report.summary.failed, 0);
   assert.ok(report.summary.passed >= 15);
   assert.ok(report.summary.notAutomated >= 1);
-  assert.equal(report.findings.length, 42);
+  assert.equal(report.findings.length, 43);
 });
 
 test("company without PR-governed Git authority fails COMPANY-001", async () => {
@@ -50,6 +50,20 @@ test("mandatory OmniSeed OS fails COMPANY-004", async () => {
   });
   const finding = (await runConformance({ company: fixture, output: false })).findings.find(item => item.invariant === "COMPANY-004");
   assert.equal(finding.status, "failed"); assert.match(finding.evidence, /optional primitive participant/i);
+});
+
+test("privileged or absent reconciliation path fails COMPANY-005", async () => {
+  const fixture = await companyFixture("company-reconciliation", source => source.replace("id: reconcile_omniseed_ecosystem", "id: hidden_bootstrap_reconciliation"));
+  const finding = (await runConformance({ company: fixture, engine: join(products, "omniseed"), output: false })).findings.find(item => item.invariant === "COMPANY-005");
+  assert.equal(finding.status, "failed");
+  assert.match(finding.evidence, /ordinary company capability/i);
+});
+
+test("company declaration self-pinning its runtime desired revision fails COMPANY-005", async () => {
+  const fixture = await companyFixture("company-self-pin", source => source.replace("companyId: omniseed_ecosystem\n            path:", `companyId: omniseed_ecosystem\n            desiredRevision: ${"a".repeat(40)}\n            path:`));
+  const finding = (await runConformance({ company: fixture, engine: join(products, "omniseed"), output: false })).findings.find(item => item.invariant === "COMPANY-005");
+  assert.equal(finding.status, "failed");
+  assert.match(finding.evidence, /self-pin/i);
 });
 
 test("reverse runtime dependency fails ARCH-001 with inspectable evidence", async () => {
