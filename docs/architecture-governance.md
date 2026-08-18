@@ -33,7 +33,7 @@ Principle and invariant changes are governed changes themselves. Permanent invar
 
 Capabilities express company intent. Primitive requirements express the fundamental company building blocks that must be manifested. Providers are replaceable ways to realise those families. Deployed state records what concretely exists; observations and evidence establish what reality says; reconciliation closes the gap.
 
-The canonical manifestation vocabulary is `agents`, `skills`, `connectors`, `workflows`, `schedules`, `policies`, `observations`, `memory`, `identity`, and `machines`. Provider selection is independent per family even when one package implements several. Capabilities compose primitives and never bind directly to vendors.
+The canonical manifestation vocabulary is `agents`, `skills`, `connectors`, `workflows`, `schedules`, `policies`, `observations`, `memory`, `identity`, and `machines`. The family Provider map supplies defaults; selection remains subordinate to primitive instances so a Realisation may use different supplying organisations within one family. Capabilities compose primitives and never bind directly to vendors.
 
 `systems` and `company_search` are removed alpha ontology, not aliases. Persistence belongs to state and does not justify a catch-all primitive. Search remains ordinary replaceable retrieval functionality composed from operations and appropriate primitives. Agent means agency and does not privilege AI: people, software, services, teams, organisations, machines with agency, and AI systems may all be governed realisations.
 
@@ -44,3 +44,9 @@ Company Search is the canonical layer test: `company_search` is a Company Capabi
 A Realisation Plan changes reality to match the company definition. A Company Change Proposal proposes changing the company definition itself.
 
 Semantic systems such as Lily may recommend either path and cite evidence. They do not directly mutate canonical company truth or Provider state. OmniSeed validates and governs the exact proposal; applying it recompiles desired state, after which the existing realisation loop detects and handles new gaps.
+
+## Reconciliation is a company capability
+
+Running the convergence loop is not a privileged exception to Company as Code. A production company declares the ability to reconcile approved desired state as a Capability and names a Realisation composed from ordinary workflow, connector, policy, memory, observation, and identity primitives as appropriate. The implementation may use OmniSeed Engine inside GitHub Actions, Vercel Functions, or another replaceable runtime, but those products do not become the Capability.
+
+Bootstrap code may install configuration and invoke the declared operations. It receives no private mutation path: planning persists an exact plan, approval binds that plan, apply invokes selected Providers, observation records evidence, and desired state remains the merged Git declaration. A missing runtime-state, policy, observation, or Provider implementation therefore leaves the reconciliation Capability partial or missing instead of being hidden by a successful deployment script.

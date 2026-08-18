@@ -38,7 +38,8 @@ export const ruleTests = {
   "canonical-company-git-authority": canonicalCompanyGitAuthority,
   "explainable-realisation-chain": explainableRealisationChain,
   "replaceable-governed-steward": replaceableGovernedSteward,
-  "optional-os-realisation": optionalOsRealisation
+  "optional-os-realisation": optionalOsRealisation,
+  "ordinary-reconciliation-capability": ordinaryReconciliationCapability
 };
 
 const canonicalPrimitiveFamilies = ["agents", "skills", "connectors", "workflows", "schedules", "policies", "observations", "memory", "identity", "machines"];
@@ -123,8 +124,9 @@ async function exactPersistedPlan({ repositories }) {
 
 async function stalePlanProtection({ repositories }) {
   const engine = await repositories.omniseed.read("src/engine.js");
-  const expected = ["state.version !== plan.stateVersion", 'EngineError("plan_stale"'];
+  const expected = ['EngineError("plan_stale"'];
   const missing = expected.filter(text => !engine.includes(text));
+  if (!engine.includes("state.version !== plan.stateVersion") && !engine.includes("state.version !== approval?.stateVersion")) missing.push("approved state-version comparison");
   if (!engine.includes("definitionHash(active) !== plan.definitionHash") && !engine.includes("definitionHash(declaration) !== plan.definitionHash")) missing.push("definition hash comparison");
   return missing.length ? fail("omniseed", `Stale-plan checks missing: ${missing.join(", ")}`) : pass("Apply rejects both state-version and declaration drift as plan_stale.");
 }
@@ -174,13 +176,46 @@ async function explainableRealisationChain({ repositories }) {
     for (const participant of realisation.participants) {
       const resource = resources.get(participant.resource);
       if (!resource) return fail("company", `Realisation ${realisation.id} references missing primitive resource ${participant.resource}.`);
-      if (!company.spec.providers[resource.family]) return fail("company", `Primitive ${participant.resource} has no independently selected ${resource.family} Provider.`);
+      if (!resource.provider && !company.spec.providers[resource.family]) return fail("company", `Primitive ${participant.resource} has no independently selected ${resource.family} Provider or family default.`);
       if ((participant.supplies ?? []).some(id => !requirements.has(id) || !(resource.offers ?? []).includes(id))) return fail("company", `Participant ${participant.resource} claims a requirement outside its Capability/resource offers.`);
     }
   }
   const compiler = await repositories.omniseed.read("src/compiler.js");
   const markers = ["realisations", "participants", "provider", "observed", "evidence"];
   return markers.every(marker => compiler.includes(marker)) ? pass("Every company Realisation references primitive resources with family Provider selections; engine inspection projects Provider, observation, and evidence trace data.") : fail("omniseed", "Compiled realisation trace is incomplete.");
+}
+
+async function ordinaryReconciliationCapability({ repositories }) {
+  if (!repositories.company) return fail("company", "Canonical company repository is absent.");
+  if (!repositories.omniseed) return fail("omniseed", "Engine repository is absent.");
+  const company = parse(await repositories.company.read("omniform.yaml"));
+  const os = (company.spec.resources?.connectors ?? []).find(item => item.id === "omniseed_os");
+  if (os?.spec?.companyBinding?.desiredRevision) return fail("company", "The desired company declaration must not self-pin its own runtime desiredRevision; the reconciler binds the exact merged revision as Engine state.");
+  const capability = company.spec.capabilities.find(item => item.id === "reconcile_omniseed_ecosystem");
+  if (!capability) return fail("company", "Production reconciliation is not declared as an ordinary company Capability.");
+  const realisation = company.spec.realisations.find(item => item.id === capability.realisations?.[0] && item.capability === capability.id);
+  if (!realisation) return fail("company", "Reconciliation Capability has no named primitive-composition Realisation.");
+  const requiredFamilies = new Set(capability.requires.map(item => item.primitiveFamily));
+  const expectedFamilies = ["workflows", "connectors", "policies", "memory", "observations", "identity"];
+  const missingFamilies = expectedFamilies.filter(family => !requiredFamilies.has(family));
+  if (missingFamilies.length) return fail("company", `Reconciliation omits required primitive responsibilities: ${missingFamilies.join(", ")}.`);
+  const operations = new Map(company.spec.operations.map(item => [item.id, item]));
+  const expectedOperations = ["generate_plan", "apply_plan", "observe_company"];
+  const missingOperations = expectedOperations.filter(id => operations.get(id)?.capability !== capability.id);
+  if (missingOperations.length) return fail("company", `Reconciliation does not own ordinary governed operations: ${missingOperations.join(", ")}.`);
+  const engine = await repositories.omniseed.read("src/engine.js");
+  const handlers = [
+    '.register("generate_plan"',
+    '.register("apply_plan"',
+    '.register("observe_company"',
+    "context.engine.plan(",
+    "context.engine.apply(",
+    "context.engine.reconcile("
+  ];
+  const missingHandlers = handlers.filter(marker => !engine.includes(marker));
+  return missingHandlers.length
+    ? fail("omniseed", `Ordinary reconciliation operation handlers are incomplete: ${missingHandlers.join(", ")}.`)
+    : pass("Reconciliation is a declared Capability with a named primitive composition and uses the ordinary governed plan, apply, and observe Engine operations without a bootstrap-only mutation path.");
 }
 
 async function replaceableGovernedSteward({ repositories }) {
@@ -382,9 +417,14 @@ async function independentProviderSelection({ repositories }) {
   const schema = JSON.parse(await repositories.omniform.read("schema/omniform.schema.json"));
   const providerKeys = Object.keys(schema.$defs?.providerMap?.properties ?? {});
   if (JSON.stringify(providerKeys) !== JSON.stringify(canonicalPrimitiveFamilies)) return fail("omniform", "Provider selection is not independently keyed by every canonical primitive family.");
-  const example = await repositories.omniform.read("examples/omniseed/omniform.yaml");
-  const distinctSelections = [...example.matchAll(/provider:\s*([a-z][a-z0-9_]*)/g)].map(match => match[1]);
-  return new Set(distinctSelections).size >= 3 ? pass("The schema selects Providers per family and the software-development fixture composes independently selected implementations.") : fail("omniform", "The canonical composition fixture does not demonstrate independent Provider selection.");
+  if (!schema.$defs?.resource?.properties?.provider) return fail("omniform", "Primitive resources cannot override a family Provider default.");
+  const engine = await repositories.omniseed.read("src/compiler.js");
+  if (!engine.includes("providerIdForResource")) return fail("omniseed", "Engine compilation does not retain primitive-instance Provider selection.");
+  const company = repositories.company ? parse(await repositories.company.read("omniform.yaml")) : null;
+  const memoryProviders = new Set((company?.spec?.resources?.memory ?? []).map(item => item.provider ?? company.spec.providers.memory?.provider).filter(Boolean));
+  return memoryProviders.size >= 2
+    ? pass("Family defaults remain available while primitive instances can select different supplying organisations; the reference company composes Omnicede and Neon resources within memory.")
+    : fail("company", "The canonical company does not prove independent Provider selection for primitive instances within one family.");
 }
 
 async function companySearchCapabilityBoundary({ repositories }) {
