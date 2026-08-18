@@ -59,7 +59,7 @@ jobs:
         uses: actions/checkout@v7
         with:
           repository: mikeajijola/omniseed-provider-omniseed
-          ref: f73f8ad7f1c90268f8a60885e75d3378392a2a80
+          ref: bfa20da6f2e69e183c491b146897c0afd16344fa
           path: omniseed-provider-omniseed
       - name: Check out Omnicede Provider
         uses: actions/checkout@v7
