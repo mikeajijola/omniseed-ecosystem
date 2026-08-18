@@ -22,6 +22,13 @@ test("current ecosystem emits a valid report with no deterministic failures", as
   assert.ok(report.summary.passed >= 15);
   assert.ok(report.summary.notAutomated >= 1);
   assert.equal(report.findings.length, 44);
+  assert.equal(report.reportKind, "mainline");
+  assert.equal(report.governance.commit.length, 40);
+  assert.match(report.governance.invariantsDigest, /^sha256:[0-9a-f]{64}$/);
+});
+
+test("candidate evidence cannot overwrite canonical mainline evidence", async () => {
+  await assert.rejects(runConformance({ reportKind: "candidate", freshness: "candidate", output: join(workspace, "reports/main/latest.json") }), /cannot overwrite canonical mainline evidence/);
 });
 
 test("company without PR-governed Git authority fails COMPANY-001", async () => {
