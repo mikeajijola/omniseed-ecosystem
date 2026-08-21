@@ -130,7 +130,7 @@ async function buildContext(roots, compatibility) {
 async function sourceFiles(directory, base = directory) {
   const output = [];
   for (const entry of await readdir(directory, { withFileTypes: true })) {
-    if ([".git", "node_modules", "coverage"].includes(entry.name)) continue;
+    if ([".git", ".eve", ".output", "node_modules", "coverage"].includes(entry.name)) continue;
     const path = join(directory, entry.name);
     if (entry.isDirectory()) output.push(...await sourceFiles(path, base));
     else output.push(relative(base, path));
