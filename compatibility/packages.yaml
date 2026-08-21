@@ -3,5 +3,5 @@ channels:
   generation-1-alpha:
     omniform: 1.0.0-alpha.5
     engine: 1.0.0-alpha.8
-    os: 1.0.0-alpha.13
+    os: 1.0.0-alpha.14
     status: supported
