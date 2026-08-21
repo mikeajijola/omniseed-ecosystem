@@ -32,14 +32,16 @@ test("generated OS runtime output is not treated as authored Provider-bypass sou
   const os = join(fixture, "omniseedos");
   await cp(join(products, "omniseedos"), os, {
     recursive: true,
-    filter: source => !source.includes("/.git") && !source.includes("/node_modules") && !source.includes("/.eve") && !source.includes("/.output")
+    filter: source => !source.includes("/.git") && !source.includes("/node_modules") && !source.includes("/.eve") && !source.includes("/.output") && !source.includes("/.vercel")
   });
   execFileSync("git", ["init", "-q", os]);
   execFileSync("git", ["-C", os, "add", "."]);
   execFileSync("git", ["-C", os, "-c", "user.name=Conformance Test", "-c", "user.email=test@example.invalid", "commit", "-qm", "fixture"]);
-  await writeFile(join(os, ".gitignore"), ".output/\n.eve/\n");
+  await writeFile(join(os, ".gitignore"), ".output/\n.eve/\n.vercel/\n");
   await mkdir(join(os, ".output"), { recursive: true });
   await writeFile(join(os, ".output", "generated.js"), "import openai from 'openai';\n");
+  await mkdir(join(os, ".vercel", "output"), { recursive: true });
+  await writeFile(join(os, ".vercel", "output", "generated.js"), "import openai from 'openai';\n");
   const finding = (await runConformance({ os, output: false })).findings.find(item => item.invariant === "AGENT-001");
   assert.equal(finding.status, "passed");
 });
