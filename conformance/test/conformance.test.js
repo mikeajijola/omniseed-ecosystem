@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
 import { existsSync } from "node:fs";
-import { cp, mkdtemp, readFile, writeFile } from "node:fs/promises";
+import { cp, mkdir, mkdtemp, readFile, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { runConformance } from "../src/index.js";
@@ -25,6 +25,23 @@ test("current ecosystem emits a valid report with no deterministic failures", as
   assert.equal(report.reportKind, "mainline");
   assert.equal(report.governance.commit.length, 40);
   assert.match(report.governance.invariantsDigest, /^sha256:[0-9a-f]{64}$/);
+});
+
+test("generated OS runtime output is not treated as authored Provider-bypass source", async () => {
+  const fixture = await mkdtemp(join(tmpdir(), "omniseed-os-generated-output-"));
+  const os = join(fixture, "omniseedos");
+  await cp(join(products, "omniseedos"), os, {
+    recursive: true,
+    filter: source => !source.includes("/.git") && !source.includes("/node_modules") && !source.includes("/.eve") && !source.includes("/.output")
+  });
+  execFileSync("git", ["init", "-q", os]);
+  execFileSync("git", ["-C", os, "add", "."]);
+  execFileSync("git", ["-C", os, "-c", "user.name=Conformance Test", "-c", "user.email=test@example.invalid", "commit", "-qm", "fixture"]);
+  await writeFile(join(os, ".gitignore"), ".output/\n.eve/\n");
+  await mkdir(join(os, ".output"), { recursive: true });
+  await writeFile(join(os, ".output", "generated.js"), "import openai from 'openai';\n");
+  const finding = (await runConformance({ os, output: false })).findings.find(item => item.invariant === "AGENT-001");
+  assert.equal(finding.status, "passed");
 });
 
 test("candidate evidence cannot overwrite canonical mainline evidence", async () => {
