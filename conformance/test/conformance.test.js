@@ -13,7 +13,7 @@ const detectedProducts = existsSync(join(workspace, "omniform")) ? workspace : r
 const products = resolve(process.env.OMNISEED_PRODUCTS_ROOT ?? detectedProducts);
 const defaultCompany = existsSync(join(products, "omniseed-ecosystem-company")) ? join(products, "omniseed-ecosystem-company") : join(products, "..", "omniseed-ecosystem-company");
 const canonicalCompany = resolve(process.env.OMNISEED_COMPANY_REPOSITORY ?? defaultCompany);
-const githubProvider = existsSync(join(products, "provider-github")) ? join(products, "provider-github") : join(products, "omniseed-provider-github");
+const githubProvider = resolve(process.env.OMNISEED_GITHUB_PROVIDER ?? (existsSync(join(products, "provider-github")) ? join(products, "provider-github") : join(products, "omniseed-provider-github")));
 const vercelProvider = resolve(process.env.OMNISEED_VERCEL_PROVIDER ?? join(products, "omniseed-provider-vercel"));
 
 test("current ecosystem emits a valid report with no deterministic failures", async () => {
