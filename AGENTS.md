@@ -26,5 +26,6 @@ When you work here, protect the boundaries that let Company as Code stay truthfu
 - Do not silently weaken a critical rule to make a report green.
 - Keep repository paths configurable. Never assume a developer's home directory.
 - Never read or print credentials while inspecting repositories.
+- Always visually inspect every produced user-facing artifact in its rendered or deployed form before reporting it complete. Automated tests and HTTP status checks do not replace this review.
 
 Run `npm test` and `npm run conformance` before proposing a change. See [`docs/adding-an-invariant.md`](docs/adding-an-invariant.md) and [`docs/architecture-governance.md`](docs/architecture-governance.md).
