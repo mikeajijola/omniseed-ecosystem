@@ -8,5 +8,5 @@ channels:
   generation-1-inference-alpha:
     omniform: 1.0.0-alpha.6
     engine: 1.0.0-alpha.20
-    os: 1.0.0-alpha.37
+    os: 1.0.0-alpha.38
     status: supported
