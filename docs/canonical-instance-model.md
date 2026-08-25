@@ -18,6 +18,8 @@ Providers advertise primitive-family contracts. They never directly claim arbitr
 
 Provider identity means the supplying organisation, as defined by [Provider semantics](provider-semantics.md). Thus Lily is an Agent primitive participant implemented using Vercel's Eve framework; Vercel is the Provider. GitHub Actions and Checks are products beneath the GitHub Provider, not separate Providers.
 
+Provisioned model inference is independently inspectable through the `inference` primitive family. For a direct Gemini binding, Lily remains the Agent actor, Google is the inference Provider, Gemini API and the selected model remain implementation choices, and LiteLLM remains a framework. Replacing any of those lower-level choices does not redefine Company Stewardship or Lily's organisational identity.
+
 ## Steward and interfaces
 
 Company Stewardship is a company Capability. Lily is the first declared Agent participant for the OmniSeed Ecosystem company, with organisational identity separate from runtime Provider/model configuration. A governed steward resolves company context and invokes the same declared OmniSeed operations as OS, CLI, API, or another actor. It cannot self-escalate.

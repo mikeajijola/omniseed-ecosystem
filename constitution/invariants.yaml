@@ -61,7 +61,7 @@ invariants:
     scope: [omniform, githubProvider]
     deterministic: true
     test: canonical-primitive-vocabulary
-    remediation: Use agents, skills, connectors, workflows, schedules, policies, observations, memory, identity, or machines and document manual migration of obsolete families.
+    remediation: Use agents, inference, skills, connectors, workflows, schedules, policies, observations, memory, identity, or machines and document manual migration of obsolete families.
     owner: omniseed-ecosystem
   - id: PRIM-002
     principle: PROVIDER_TRUTH
@@ -89,6 +89,15 @@ invariants:
     deterministic: true
     test: independent-provider-selection
     remediation: Preserve family defaults and resource-level Provider selection so different primitive instances in one family can use different supplying organisations.
+    owner: omniform
+  - id: PRIM-005
+    principle: PORTABLE_SEMANTICS_ONLY
+    description: Provisioned computational inference is modelled independently from the Agent actor, implementation framework, model product, and supplying Provider organisation.
+    severity: critical
+    scope: [omniform, omniseed, company, provider-packages]
+    deterministic: false
+    test: inference-boundary-semantic-review
+    remediation: Use an inference primitive for independently provisioned inference; keep actors in agents, Provider identity organisational, and model, API, SDK, gateway, and framework choices beneath the selected Provider.
     owner: omniform
   - id: AGENT-003
     principle: CAPABILITY_PRIMARY

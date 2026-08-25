@@ -22,6 +22,8 @@ It is invalid to model this as `Lily → Eve Provider`. Lily is the organisation
 
 GitHub is the Provider organisation. Repositories, Actions, Checks, Rulesets, and Apps/API are GitHub products or features. They may implement different primitive-family responsibilities, but that does not create GitHub Actions, GitHub Checks, or GitHub Rulesets Providers.
 
+Google is the Provider organisation for a directly selected Gemini API inference implementation. Gemini API and a particular Gemini model are products and implementation choices beneath Google; LiteLLM is an integration framework. A correct trace is `Lily → Agent primitive → inference primitive → Provider: Google → product: Gemini API → selected model`, with LiteLLM recorded as implementation configuration. It is invalid to create a Gemini Provider or LiteLLM Provider merely from those product/framework names.
+
 ## Invalid product-shaped Provider identities
 
 Unless the supplying organisational boundary is genuinely distinct, these are invalid:
@@ -36,13 +38,13 @@ Before creating a Provider, identify the supplying organisation. If the proposed
 
 Names alone cannot prove organisational ownership. Semantic review must inspect explicit declarations and evidence; deterministic rules must not guess legal entities from package names.
 
-## Required authoring declaration and schema gap
+## Required authoring declaration
 
-Until the manifest contract is versioned to carry this distinction, every Provider package README and review submission must state:
+Every Provider package manifest, README, and review submission must state:
 
 - Provider organisation/legal or supplying entity;
 - canonical Provider ID;
 - supported primitive families;
 - products, services, frameworks, or SDKs used for each family.
 
-`provider-package.schema.json` v1 has no fields for supplying organisation or per-family implementation products. Adding required fields to v1 would be a breaking contract change. The smallest future extension is a versioned manifest revision with an `organisation` identity and an `implementations` map keyed by primitive family. Until that revision is coordinated across producers, consumers, examples, and conformance, this distinction is enforced by authoring requirements and semantic review rather than unreliable name inference.
+`provider-package.schema.json` v1 carries `organisation` and per-family `implementations` product metadata. Conformance can prove that the declarations exist and agree with the advertised family list. It cannot infer legal ownership or decide from names alone that a product belongs to another organisation, so semantic review must still inspect ownership evidence.

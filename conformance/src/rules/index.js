@@ -43,7 +43,7 @@ export const ruleTests = {
   "ordinary-reconciliation-capability": ordinaryReconciliationCapability
 };
 
-const canonicalPrimitiveFamilies = ["agents", "skills", "connectors", "workflows", "schedules", "policies", "observations", "memory", "identity", "machines"];
+const canonicalPrimitiveFamilies = ["agents", "inference", "skills", "connectors", "workflows", "schedules", "policies", "observations", "memory", "identity", "machines"];
 
 async function dependencyDirection({ repositories }) {
   const forbidden = {
@@ -423,15 +423,15 @@ async function canonicalPrimitiveVocabulary({ root, repositories }) {
   const providerSchema = JSON.parse(await readFile(join(root, "providers/provider-package.schema.json"), "utf8"));
   const formFamilies = formSchema.$defs?.primitiveFamily?.enum;
   const manifestFamilies = providerSchema.properties?.primitiveFamilies?.items?.enum;
-  if (JSON.stringify(formFamilies) !== JSON.stringify(canonicalPrimitiveFamilies)) return fail("omniform", `Omniform primitive families differ from the canonical ten: ${JSON.stringify(formFamilies)}`);
-  if (JSON.stringify(manifestFamilies) !== JSON.stringify(canonicalPrimitiveFamilies)) return fail("omniseed-ecosystem", `Provider manifest vocabulary differs from the canonical ten: ${JSON.stringify(manifestFamilies)}`);
+  if (JSON.stringify(formFamilies) !== JSON.stringify(canonicalPrimitiveFamilies)) return fail("omniform", `Omniform primitive families differ from the canonical eleven: ${JSON.stringify(formFamilies)}`);
+  if (JSON.stringify(manifestFamilies) !== JSON.stringify(canonicalPrimitiveFamilies)) return fail("omniseed-ecosystem", `Provider manifest vocabulary differs from the canonical eleven: ${JSON.stringify(manifestFamilies)}`);
   for (const [name, repository] of Object.entries(repositories)) {
     if (!repository.files.includes("provider-package.json")) continue;
     const manifest = JSON.parse(await repository.read("provider-package.json"));
     const obsolete = manifest.primitiveFamilies.filter(family => !canonicalPrimitiveFamilies.includes(family));
     if (obsolete.length) return fail(name, `${name} advertises removed or unknown primitive families: ${obsolete.join(", ")}`);
   }
-  return pass("Omniform and Provider contracts expose exactly the ten canonical primitive families and every inspected Provider advertises only retained families.");
+  return pass("Omniform and Provider contracts expose exactly the eleven canonical primitive families and every inspected Provider advertises only retained families.");
 }
 
 async function independentProviderSelection({ repositories }) {

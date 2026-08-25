@@ -1,6 +1,6 @@
 {
   "name": "@omniseed/conformance",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Cross-repository constitutional governance and conformance for the OmniSeed ecosystem.",
   "type": "module",
   "bin": {
