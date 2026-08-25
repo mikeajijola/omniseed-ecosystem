@@ -21,7 +21,7 @@ test("current ecosystem emits a valid report with no deterministic failures", as
   assert.equal(report.summary.failed, 0);
   assert.ok(report.summary.passed >= 15);
   assert.ok(report.summary.notAutomated >= 1);
-  assert.equal(report.findings.length, 44);
+  assert.equal(report.findings.length, 45);
   assert.equal(report.reportKind, "mainline");
   assert.equal(report.governance.commit.length, 40);
   assert.match(report.governance.invariantsDigest, /^sha256:[0-9a-f]{64}$/);
@@ -219,6 +219,19 @@ test("Provider manifest schema accepts multiple retained primitive families", as
   const validate = new Ajv2020({ strict: true }).compile(schema);
   const manifest = { manifestVersion: "1.0", id: "multi_family", organisation: "Example Organisation", version: "1.0.0", engineCompatibility: "omniseed.provider.protocol/1.0", primitiveFamilies: ["connectors", "workflows", "observations"], implementations: [{ family: "connectors", products: ["Connector Product"] }, { family: "workflows", products: ["Workflow Product"] }, { family: "observations", products: ["Observation Product"] }], operations: [], configurationSchema: "./configuration.schema.json", observationTypes: [], evidenceTypes: [], permissions: [] };
   assert.equal(validate(manifest), true);
+});
+
+test("Provider manifest schema accepts inference supplied by an organisation using a named model product", async () => {
+  const schema = JSON.parse(await readFile(join(workspace, "providers/provider-package.schema.json"), "utf8"));
+  const validate = new Ajv2020({ strict: true }).compile(schema);
+  const manifest = {
+    manifestVersion: "1.0", id: "google", organisation: "Google", version: "0.1.0",
+    engineCompatibility: "omniseed.provider.protocol/1.0", primitiveFamilies: ["inference"],
+    implementations: [{ family: "inference", products: ["Gemini API"] }],
+    operations: [], configurationSchema: "./provider-configuration.schema.json",
+    observationTypes: ["inference_binding"], evidenceTypes: ["google_model_response"], permissions: []
+  };
+  assert.equal(validate(manifest), true, JSON.stringify(validate.errors));
 });
 
 test("duplicate active Provider package manifests fail PROVIDER-003 with both paths", async () => {
