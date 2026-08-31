@@ -1,0 +1,3 @@
+catalogueVersion: "1.0.0"
+entries:
+  - { id: automate_delivery, domain: engineering, name: Provider delivery, outcome: "Product changes are released safely with inspectable evidence and controls.", requirements: [change_delivery] }

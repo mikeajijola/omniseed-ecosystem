@@ -1,0 +1,6 @@
+catalogueVersion: "1.0.0"
+entries:
+  - id: govern_strategy
+    domain: strategy_governance
+    name: Govern strategy
+    requirements: [decision_authority]

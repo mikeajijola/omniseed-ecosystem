@@ -1,0 +1,4 @@
+catalogueVersion: "1.0.0"
+entries:
+  - { id: govern_strategy, domain: strategy_governance, name: Govern strategy, outcome: "Direction and accountability remain explicit across the company.", requirements: [decision_authority] }
+  - { id: govern_strategy, domain: product_service, name: Govern products, outcome: "Product decisions remain explicit and accountable across the company.", requirements: [portfolio_decisions] }

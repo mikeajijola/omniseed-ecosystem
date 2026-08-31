@@ -1,0 +1,4 @@
+catalogueVersion: "1.0.0"
+entries:
+  - { id: govern_strategy, domain: strategy_governance, name: Govern strategy, outcome: "Direction and accountability remain explicit across the company.", requirements: [decision_authority] }
+  - { id: review_strategy, domain: strategy_governance, name: GOVERN STRATEGY, outcome: "Strategic decisions are reviewed against evidence and company outcomes.", requirements: [strategic_review] }

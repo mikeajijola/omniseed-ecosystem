@@ -1,0 +1,14 @@
+{
+  "manifestVersion": "1.0",
+  "id": "example",
+  "organisation": "Example Organisation",
+  "version": "1.0.0",
+  "engineCompatibility": "omniseed.provider.protocol/1.0",
+  "primitiveFamilies": ["systems"],
+  "implementations": [{ "family": "systems", "products": ["Example Product"] }],
+  "operations": [],
+  "configurationSchema": "./configuration.schema.json",
+  "observationTypes": [],
+  "evidenceTypes": [],
+  "permissions": []
+}
