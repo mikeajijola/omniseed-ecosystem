@@ -1,6 +1,6 @@
-# Business capability catalogue
+# Company capability reference catalogue
 
-Version 1.0.0. This is reference knowledge, not a running company's desired state. Companies copy selected IDs and specialise their requirements in canonical Omniform; this repository is never a runtime dependency.
+Version 1.0.0. This governance-owned catalogue is reference knowledge, not canonical company desired state. Companies may record selected IDs as provenance while declaring and specialising their own capabilities in canonical Omniform; this repository is never a runtime dependency.
 
 ## strategy governance
 

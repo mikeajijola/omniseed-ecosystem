@@ -1,0 +1,3 @@
+catalogueVersion: "1.0.0"
+entries:
+  - { id: support_customers, domain: customer_success, name: Support customers, outcome: "Customers receive accountable help and achieve their intended outcomes.", requirements: [actor_support] }

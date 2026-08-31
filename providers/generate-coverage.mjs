@@ -2,13 +2,32 @@
 import { readFile, writeFile, mkdir } from "node:fs/promises";
 import { resolve, dirname } from "node:path";
 import { parse } from "yaml";
+import Ajv2020 from "ajv/dist/2020.js";
 
 export const primitiveFamilies = ["agents", "inference", "skills", "connectors", "workflows", "schedules", "policies", "observations", "memory", "identity", "machines"];
+
+const schema = JSON.parse(await readFile(new URL("provider-package.schema.json", import.meta.url), "utf8"));
+const ajv = new Ajv2020({ allErrors: true, strict: true });
+const validateProviderManifest = ajv.compile(schema);
+
+export function assertCanonicalProviderManifest(manifest, manifestPath = "provider-package.json") {
+  if (!validateProviderManifest(manifest)) throw new Error(`Invalid Provider manifest ${manifestPath} (declared primitiveFamilies=${JSON.stringify(manifest?.primitiveFamilies)}): ${ajv.errorsText(validateProviderManifest.errors)}`);
+  const implementationFamilies = manifest.implementations.map(item => item.family);
+  const missing = manifest.primitiveFamilies.filter(family => !implementationFamilies.includes(family));
+  const extra = implementationFamilies.filter(family => !manifest.primitiveFamilies.includes(family));
+  const duplicates = implementationFamilies.filter((family, index) => implementationFamilies.indexOf(family) !== index);
+  if (missing.length || extra.length || duplicates.length) throw new Error(`Invalid Provider manifest ${manifestPath}: implementations must exactly and uniquely match primitiveFamilies (missing=${missing.join(",") || "none"}; extra=${extra.join(",") || "none"}; duplicated=${[...new Set(duplicates)].join(",") || "none"})`);
+  return manifest;
+}
 
 export async function providerCoverage({ providerPaths = [], companyPath = null }) {
   const providers = [];
   for (const path of providerPaths) {
-    const manifest = JSON.parse(await readFile(resolve(path, "provider-package.json"), "utf8"));
+    const manifestPath = resolve(path, "provider-package.json");
+    let manifest;
+    try { manifest = JSON.parse(await readFile(manifestPath, "utf8")); }
+    catch (error) { throw new Error(`Cannot read Provider manifest ${manifestPath}: ${error.message}`); }
+    assertCanonicalProviderManifest(manifest, manifestPath);
     providers.push({ id: manifest.id, organisation: manifest.organisation, packageVersion: manifest.version, protocol: manifest.engineCompatibility, claims: manifest.implementations.map(item => ({ family: item.family, products: item.products, conformance: "manifest_valid", liveAcceptanceEvidence: false })) });
   }
   providers.sort((a, b) => a.id.localeCompare(b.id));

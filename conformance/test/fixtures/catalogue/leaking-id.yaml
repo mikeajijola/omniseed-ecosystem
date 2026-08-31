@@ -1,0 +1,3 @@
+catalogueVersion: "1.0.0"
+entries:
+  - { id: implementation_operations, domain: company_operations, name: Operate external services, outcome: "External services remain available and accountable to company outcomes.", requirements: [service_operation] }

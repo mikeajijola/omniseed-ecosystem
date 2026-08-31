@@ -1,0 +1,13 @@
+{
+  "manifestVersion": "1.0",
+  "id": "github",
+  "version": "1.0.0",
+  "engineCompatibility": "omniseed.provider.protocol/1.0",
+  "primitiveFamilies": ["workflows"],
+  "implementations": [{ "family": "workflows", "products": ["Actions"] }],
+  "operations": [],
+  "configurationSchema": "./configuration.schema.json",
+  "observationTypes": [],
+  "evidenceTypes": [],
+  "permissions": []
+}

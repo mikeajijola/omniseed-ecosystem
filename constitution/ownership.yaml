@@ -60,6 +60,7 @@ repositories:
     owns:
       - architectural_constitution
       - invariant_catalogue
+      - capability_reference_catalogue
       - ecosystem_conformance
       - compatibility_catalogue
       - provider_package_protocol
