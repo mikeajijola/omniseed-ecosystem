@@ -7,5 +7,11 @@ repositories:
   vercel_provider: ../omniseed-provider-vercel
   neon_provider: ../omniseed-provider-neon
   omniseed_provider: ../omniseed-provider-omniseed
+  google_provider: ../omniseed-provider-google
   omnicede_provider: ../omnicede
   ecosystem_company: ../omniseed-ecosystem-company
+provider_exclusions:
+  # Remove this exclusion when the Google Provider repository is supplied to
+  # canonical conformance. Its omission must never be silent.
+  - id: google_provider
+    rationale: "Not yet supplied to the canonical conformance workspace; tracked as an explicit governed Provider exclusion."

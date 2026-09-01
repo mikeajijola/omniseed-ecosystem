@@ -19,7 +19,7 @@ The rulebook covers both governed loops: realisation plans change reality to mat
 - `compatibility/` records compatible package lines.
 - `providers/` defines provider-package and provider-registry data contracts.
 - `capabilities/` contains the governance-owned company capability reference catalogue. It is discovery/provenance material, not canonical company desired state.
-- `reports/latest.json` is the latest local conformance evidence.
+- `reports/main/latest.json` is the canonical mainline conformance evidence; candidate evidence must use a separate path.
 - `docs/` explains how to change the architecture safely.
 
 ## Run it
@@ -41,7 +41,7 @@ npx omniseed-conformance \
   --os ../omniseedos
 ```
 
-The command writes `reports/latest.json`. A failed deterministic invariant exits with a non-zero status. Warnings remain visible without pretending that a judgment is a machine-proven failure.
+The command writes the canonical mainline report under `reports/main/latest.json`. Its freshness is derived from the exact core, company, governance, and Provider revisions plus Provider package and invariant digests; it is never supplied by a caller. A failed deterministic invariant exits with a non-zero status. Warnings remain visible without pretending that a judgment is a machine-proven failure.
 
 The latest CI-generated report is published for machines at <https://mikeajijola.github.io/omniseed-ecosystem/conformance/latest.json> and for people at <https://mikeajijola.github.io/omniseed-ecosystem/conformance/>.
 

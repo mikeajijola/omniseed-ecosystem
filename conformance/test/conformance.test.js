@@ -5,7 +5,7 @@ import { existsSync } from "node:fs";
 import { cp, mkdir, mkdtemp, readFile, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
-import { runConformance } from "../src/index.js";
+import { deriveFreshness, runConformance, subjectStateDigest } from "../src/index.js";
 import Ajv2020 from "ajv/dist/2020.js";
 
 const workspace = resolve(new URL("../..", import.meta.url).pathname);
@@ -47,7 +47,43 @@ test("generated OS runtime output is not treated as authored Provider-bypass sou
 });
 
 test("candidate evidence cannot overwrite canonical mainline evidence", async () => {
-  await assert.rejects(runConformance({ reportKind: "candidate", freshness: "candidate", output: join(workspace, "reports/main/latest.json") }), /cannot overwrite canonical mainline evidence/);
+  await assert.rejects(runConformance({ reportKind: "candidate", output: join(workspace, "reports/main/latest.json") }), /cannot overwrite canonical mainline evidence/);
+});
+
+test("freshness is derived from exact subject state and fails closed", () => {
+  const state = { complete: true, digest: `sha256:${"a".repeat(64)}` };
+  assert.equal(deriveFreshness(state, state), "current");
+  assert.equal(deriveFreshness(state, { complete: true, digest: `sha256:${"b".repeat(64)}` }), "stale");
+  assert.equal(deriveFreshness(state, state, "candidate"), "candidate");
+  assert.equal(deriveFreshness(state, state, "mainline", false), "indeterminate");
+  assert.equal(deriveFreshness(state, null), "indeterminate");
+  assert.equal(deriveFreshness(state, { ...state, complete: false }), "indeterminate");
+});
+
+test("a caller cannot force freshness", async () => {
+  await assert.rejects(runConformance({ freshness: "current", output: false }), /cannot be supplied/);
+});
+
+test("core, Provider, governed-set, package, and invariant changes stale prior evidence", () => {
+  const identity = {
+    complete: true,
+    invariantDigest: `sha256:${"1".repeat(64)}`,
+    subjects: [
+      { id: "omniform", kind: "core", revision: "a".repeat(40) },
+      { id: "provider_github", kind: "provider", revision: "b".repeat(40), providerId: "github", packageVersion: "1.0.0", packageDigest: `sha256:${"2".repeat(64)}` }
+    ],
+    governedProviderSet: [{ id: "provider_github", status: "included", providerId: "github", rationale: null }]
+  };
+  const certified = { ...identity, digest: subjectStateDigest(identity) };
+  for (const observedIdentity of [
+    { ...identity, subjects: [{ ...identity.subjects[0], revision: "c".repeat(40) }, identity.subjects[1]] },
+    { ...identity, subjects: [identity.subjects[0], { ...identity.subjects[1], revision: "d".repeat(40) }] },
+    { ...identity, subjects: [identity.subjects[0], { ...identity.subjects[1], packageVersion: "1.0.1", packageDigest: `sha256:${"3".repeat(64)}` }] },
+    { ...identity, governedProviderSet: [...identity.governedProviderSet, { id: "provider_google", status: "excluded", providerId: null, rationale: "not supplied" }] },
+    { ...identity, invariantDigest: `sha256:${"4".repeat(64)}` }
+  ]) {
+    assert.equal(deriveFreshness(certified, { ...observedIdentity, digest: subjectStateDigest(observedIdentity) }), "stale");
+  }
 });
 
 test("company without PR-governed Git authority fails COMPANY-001", async () => {
