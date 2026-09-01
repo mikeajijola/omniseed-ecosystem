@@ -41,7 +41,7 @@ npx omniseed-conformance \
   --os ../omniseedos
 ```
 
-The command writes the canonical mainline report under `reports/main/latest.json`. Its freshness is derived from the exact core, company, governance, and Provider revisions plus Provider package and invariant digests; it is never supplied by a caller. A failed deterministic invariant exits with a non-zero status. Warnings remain visible without pretending that a judgment is a machine-proven failure.
+The command writes the canonical mainline report under `reports/main/latest.json`. Its freshness compares the observed exact core, company, governance, and Provider revisions plus Provider package and invariant digests with the previously certified mainline report. Use `--certified-report path` when certification is stored elsewhere. Missing or invalid certification is `indeterminate`, matching certification is `current`, and drift is `stale`; callers never supply the result. A failed deterministic invariant exits with a non-zero status. Warnings remain visible without pretending that a judgment is a machine-proven failure.
 
 The latest CI-generated report is published for machines at <https://mikeajijola.github.io/omniseed-ecosystem/conformance/latest.json> and for people at <https://mikeajijola.github.io/omniseed-ecosystem/conformance/>.
 

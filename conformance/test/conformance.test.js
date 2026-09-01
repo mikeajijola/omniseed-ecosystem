@@ -64,6 +64,34 @@ test("a caller cannot force freshness", async () => {
   await assert.rejects(runConformance({ freshness: "current", output: false }), /cannot be supplied/);
 });
 
+test("runConformance compares observed state with certified mainline evidence", async () => {
+  const fixture = await mkdtemp(join(tmpdir(), "omniseed-certified-report-"));
+  const certifiedReport = join(fixture, "latest.json");
+  const repositories = await conformanceRepositories(fixture);
+  const baseline = await runConformance({ ...repositories, output: false, certifiedReport });
+  assert.equal(baseline.freshness, "indeterminate");
+  await writeFile(certifiedReport, JSON.stringify(baseline));
+
+  const matching = await runConformance({ ...repositories, output: false, certifiedReport });
+  assert.equal(matching.freshness, "current");
+
+  const engine = repositories.engine;
+  await writeFile(join(engine, "freshness-drift.txt"), "changed certified subject\n");
+  execFileSync("git", ["-C", engine, "add", "."]);
+  execFileSync("git", ["-C", engine, "-c", "user.name=Conformance Test", "-c", "user.email=test@example.invalid", "commit", "-qm", "drift"]);
+  const drifted = await runConformance({ ...repositories, output: false, certifiedReport });
+  assert.equal(drifted.freshness, "stale");
+});
+
+test("invalid certified evidence fails closed", async () => {
+  const fixture = await mkdtemp(join(tmpdir(), "omniseed-invalid-certification-"));
+  const certifiedReport = join(fixture, "latest.json");
+  const repositories = await conformanceRepositories(fixture);
+  const baseline = await runConformance({ ...repositories, output: false, certifiedReport });
+  await writeFile(certifiedReport, JSON.stringify({ ...baseline, subjectState: { ...baseline.subjectState, digest: `sha256:${"0".repeat(64)}` } }));
+  assert.equal((await runConformance({ ...repositories, output: false, certifiedReport })).freshness, "indeterminate");
+});
+
 test("core, Provider, governed-set, package, and invariant changes stale prior evidence", () => {
   const identity = {
     complete: true,
@@ -321,4 +349,16 @@ function commitFixture(fixture) {
   execFileSync("git", ["init", "-q", fixture]);
   execFileSync("git", ["-C", fixture, "add", "."]);
   execFileSync("git", ["-C", fixture, "-c", "user.name=Conformance Test", "-c", "user.email=test@example.invalid", "commit", "-qm", "fixture"]);
+}
+
+async function conformanceRepositories(directory) {
+  const repositories = {};
+  for (const [option, name] of [["omniform", "omniform"], ["engine", "omniseed"], ["os", "omniseedos"]]) {
+    const path = join(directory, name);
+    await mkdir(path);
+    await writeFile(join(path, "package.json"), JSON.stringify({ name, version: "1.0.0" }));
+    commitFixture(path);
+    repositories[option] = path;
+  }
+  return repositories;
 }
