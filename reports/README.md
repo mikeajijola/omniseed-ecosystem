@@ -4,5 +4,4 @@
 
 Historical reports may be published by CI under `reports/history/` or GitHub Pages. They are not committed by default.
 
-The report separates machine-proven failures from warnings and invariants that still need semantic review.
-
+The report separates machine-proven failures from warnings and invariants that still need semantic review. Freshness is derived from the exact governed subject revisions, Provider package digests and set, and invariant digest in `subjectState`; callers cannot assert it. Candidate evidence requires a separate output and cannot replace canonical mainline evidence. Missing, ambiguous, or dirty subject state fails closed to `indeterminate`.

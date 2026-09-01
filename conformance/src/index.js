@@ -11,6 +11,11 @@ import { ruleTests } from "./rules/index.js";
 const root = resolve(new URL("../..", import.meta.url).pathname);
 
 export async function runConformance(options = {}) {
+  if (Object.hasOwn(options, "freshness")) throw new Error("Freshness is derived from observed subject state and cannot be supplied");
+  const repositoryConfiguration = parse(await readFile(join(root, "conformance/repositories.yaml"), "utf8"));
+  const configuredProviders = Object.fromEntries(Object.entries(repositoryConfiguration.repositories ?? {})
+    .filter(([name, path]) => name.endsWith("_provider") && !["github_provider", "vercel_provider"].includes(name) && existsSync(resolve(root, path)))
+    .map(([name, path]) => [`provider_${name.slice(0, -"_provider".length)}`, resolve(root, path)]));
   const additionalProviders = Object.fromEntries(Object.entries(options.providers ?? {}).map(([name, path]) => {
     if (!/^[a-z][a-z0-9_]*$/.test(name)) throw new Error(`Invalid Provider repository key: ${name}`);
     return [`provider_${name}`, resolve(path)];
@@ -22,6 +27,7 @@ export async function runConformance(options = {}) {
     ...(companyRepository(options.company) ? { company: companyRepository(options.company) } : {}),
     ...(providerRepository("omniseed-provider-github", options.githubProvider) ? { githubProvider: providerRepository("omniseed-provider-github", options.githubProvider) } : {}),
     ...(providerRepository("omniseed-provider-vercel", options.vercelProvider) ? { vercelProvider: providerRepository("omniseed-provider-vercel", options.vercelProvider) } : {}),
+    ...configuredProviders,
     ...additionalProviders
   };
   const invariantsSource = await readFile(join(root, "constitution/invariants.yaml"), "utf8");
@@ -51,19 +57,22 @@ export async function runConformance(options = {}) {
 
   const repositoryRecords = Object.fromEntries(Object.entries(roots).map(([name, path]) => [name, repositoryRecord(path, root)]));
   const governanceRecord = repositoryRecord(root, root);
-  const requestedFreshness = options.freshness ?? (options.reportKind === "candidate" ? "candidate" : "current");
   const exactTree = governanceRecord.clean && Object.values(repositoryRecords).every(item => item.clean);
+  const invariantDigest = `sha256:${createHash("sha256").update(invariantsSource).digest("hex")}`;
+  const subjectState = await createSubjectState({ repositoryRecords, roots, governanceRecord, invariantDigest, exclusions: options.providerExclusions ?? repositoryConfiguration.provider_exclusions ?? [] });
+  const reportKind = options.reportKind ?? "mainline";
   const report = {
     ecosystemVersion: String(catalogue.version),
     generatedAt: new Date().toISOString(),
-    reportKind: options.reportKind ?? "mainline",
-    freshness: exactTree ? requestedFreshness : "unknown",
+    reportKind,
+    freshness: deriveFreshness(subjectState, subjectState, reportKind, exactTree),
+    subjectState,
     governance: {
       repository: "mikeajijola/omniseed-ecosystem",
       commit: governanceRecord.commit,
       clean: governanceRecord.clean,
       constitutionVersion: String(catalogue.version),
-      invariantsDigest: `sha256:${createHash("sha256").update(invariantsSource).digest("hex")}`,
+      invariantsDigest: invariantDigest,
       runnerVersion: runner.version
     },
     repositories: repositoryRecords,
@@ -85,6 +94,42 @@ export async function runConformance(options = {}) {
     await writeFile(output, `${JSON.stringify(report, null, 2)}\n`);
   }
   return report;
+}
+
+async function createSubjectState({ repositoryRecords, roots, governanceRecord, invariantDigest, exclusions }) {
+  let complete = true;
+  const subjects = [{ id: "governance", kind: "governance", revision: governanceRecord.commit }];
+  for (const [id, record] of Object.entries(repositoryRecords)) {
+    const subject = { id, kind: id.toLowerCase().includes("provider") ? "provider" : id === "company" ? "company" : "core", revision: record.commit };
+    if (subject.kind === "provider") {
+      const manifestPath = join(roots[id], "provider-package.json");
+      try {
+        const manifestSource = await readFile(manifestPath, "utf8");
+        const manifest = JSON.parse(manifestSource);
+        subject.providerId = manifest.id;
+        subject.packageVersion = manifest.version;
+        subject.packageDigest = `sha256:${createHash("sha256").update(manifestSource).digest("hex")}`;
+        if (!subject.providerId || !subject.packageVersion) complete = false;
+      } catch { complete = false; }
+    }
+    subjects.push(subject);
+  }
+  const includedProviderIds = new Set(subjects.filter(item => item.kind === "provider").flatMap(item => [item.id, item.providerId]));
+  for (const exclusion of exclusions) if (!includedProviderIds.has(exclusion.id)) subjects.push({ id: exclusion.id, kind: "provider", status: "excluded", rationale: exclusion.rationale });
+  subjects.sort((a, b) => a.id.localeCompare(b.id));
+  const governedProviderSet = subjects.filter(item => item.kind === "provider").map(item => ({ id: item.id, status: item.status ?? "included", providerId: item.providerId ?? null, rationale: item.rationale ?? null }));
+  const identity = { complete, invariantDigest, subjects, governedProviderSet };
+  return { ...identity, digest: subjectStateDigest(identity) };
+}
+
+export function deriveFreshness(certified, observed, reportKind = "mainline", exactTree = true) {
+  if (reportKind === "candidate") return "candidate";
+  if (!certified || !observed || !exactTree || !certified.complete || !observed.complete || !certified.digest || !observed.digest) return "indeterminate";
+  return certified.digest === observed.digest ? "current" : "stale";
+}
+
+export function subjectStateDigest(value) {
+  return `sha256:${createHash("sha256").update(JSON.stringify(value)).digest("hex")}`;
 }
 
 function defaultRepository(name) {

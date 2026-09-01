@@ -4,12 +4,23 @@
   "title": "OmniSeed Ecosystem Conformance Report",
   "type": "object",
   "additionalProperties": false,
-  "required": ["ecosystemVersion", "generatedAt", "reportKind", "freshness", "governance", "repositories", "summary", "findings"],
+  "required": ["ecosystemVersion", "generatedAt", "reportKind", "freshness", "subjectState", "governance", "repositories", "summary", "findings"],
   "properties": {
     "ecosystemVersion": { "type": "string", "const": "1" },
     "generatedAt": { "type": "string", "format": "date-time" },
     "reportKind": { "enum": ["mainline", "candidate"] },
-    "freshness": { "enum": ["current", "stale", "candidate", "historical", "unknown"] },
+    "freshness": { "enum": ["current", "stale", "candidate", "indeterminate"] },
+    "subjectState": {
+      "type": "object", "additionalProperties": false,
+      "required": ["complete", "invariantDigest", "subjects", "governedProviderSet", "digest"],
+      "properties": {
+        "complete": { "type": "boolean" },
+        "invariantDigest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+        "digest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+        "subjects": { "type": "array", "items": { "$ref": "#/$defs/subject" } },
+        "governedProviderSet": { "type": "array", "items": { "$ref": "#/$defs/providerSubject" } }
+      }
+    },
     "governance": {
       "type": "object",
       "additionalProperties": false,
@@ -56,6 +67,22 @@
     }
   },
   "$defs": {
+    "subject": {
+      "type": "object", "additionalProperties": false, "required": ["id", "kind"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 }, "kind": { "enum": ["core", "company", "governance", "provider"] },
+        "revision": { "type": "string", "pattern": "^[0-9a-f]{40}$" }, "status": { "const": "excluded" },
+        "providerId": { "type": "string", "minLength": 1 }, "packageVersion": { "type": "string", "minLength": 1 },
+        "packageDigest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" }, "rationale": { "type": "string", "minLength": 1 }
+      }, "oneOf": [
+        { "properties": { "revision": {} }, "required": ["revision"] },
+        { "properties": { "status": {}, "rationale": {} }, "required": ["status", "rationale"] }
+      ]
+    },
+    "providerSubject": {
+      "type": "object", "additionalProperties": false, "required": ["id", "status", "providerId", "rationale"],
+      "properties": { "id": { "type": "string" }, "status": { "enum": ["included", "excluded"] }, "providerId": { "type": ["string", "null"] }, "rationale": { "type": ["string", "null"] } }
+    },
     "repository": {
       "type": "object",
       "additionalProperties": false,

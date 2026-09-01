@@ -28,6 +28,7 @@
         const visible = report.findings.filter(item => item.status !== "passed");
         target.replaceChildren();
         const heading = document.createElement("h2"); heading.textContent = "Latest result"; target.append(heading);
+        const identity = document.createElement("p"); identity.textContent = `${report.reportKind} evidence — freshness: ${report.freshness} — state: ${report.subjectState.digest}`; target.append(identity);
         const summary = document.createElement("dl");
         for (const [label, value] of Object.entries(report.summary)) {
           const term = document.createElement("dt"); term.textContent = label;
@@ -36,6 +37,10 @@
         }
         target.append(summary);
         const time = document.createElement("p"); time.textContent = `Generated ${report.generatedAt}`; target.append(time);
+        const subjectsHeading = document.createElement("h2"); subjectsHeading.textContent = "Certified subjects"; target.append(subjectsHeading);
+        const subjects = document.createElement("ul");
+        report.subjectState.subjects.forEach(item => { const entry = document.createElement("li"); entry.textContent = item.status === "excluded" ? `${item.id} — excluded: ${item.rationale}` : `${item.id} — ${item.revision}${item.packageVersion ? ` (package ${item.packageVersion})` : ""}`; subjects.append(entry); });
+        target.append(subjects);
         const subheading = document.createElement("h2"); subheading.textContent = "Open review items"; target.append(subheading);
         const list = document.createElement("ul");
         visible.forEach(item => {
