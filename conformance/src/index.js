@@ -61,11 +61,14 @@ export async function runConformance(options = {}) {
   const invariantDigest = `sha256:${createHash("sha256").update(invariantsSource).digest("hex")}`;
   const subjectState = await createSubjectState({ repositoryRecords, roots, governanceRecord, invariantDigest, exclusions: options.providerExclusions ?? repositoryConfiguration.provider_exclusions ?? [] });
   const reportKind = options.reportKind ?? "mainline";
+  const canonicalMainline = resolve(join(root, "reports/main/latest.json"));
+  const certifiedReportPath = resolve(options.certifiedReport ?? canonicalMainline);
+  const certifiedSubjectState = reportKind === "mainline" ? await readCertifiedSubjectState(certifiedReportPath) : null;
   const report = {
     ecosystemVersion: String(catalogue.version),
     generatedAt: new Date().toISOString(),
     reportKind,
-    freshness: deriveFreshness(subjectState, subjectState, reportKind, exactTree),
+    freshness: deriveFreshness(certifiedSubjectState, subjectState, reportKind, exactTree),
     subjectState,
     governance: {
       repository: "mikeajijola/omniseed-ecosystem",
@@ -88,12 +91,24 @@ export async function runConformance(options = {}) {
   if (options.output !== false) {
     if (report.reportKind === "candidate" && !options.output) throw new Error("Candidate reports require an explicit candidate output path");
     const output = resolve(options.output ?? join(root, "reports/main/latest.json"));
-    const canonicalMainline = resolve(join(root, "reports/main/latest.json"));
     if (report.reportKind === "candidate" && output === canonicalMainline) throw new Error("Candidate evidence cannot overwrite canonical mainline evidence");
     await mkdir(dirname(output), { recursive: true });
     await writeFile(output, `${JSON.stringify(report, null, 2)}\n`);
   }
   return report;
+}
+
+async function readCertifiedSubjectState(path) {
+  try {
+    const report = JSON.parse(await readFile(path, "utf8"));
+    await validateReport(report);
+    if (report.reportKind !== "mainline") return null;
+    const { digest, ...identity } = report.subjectState;
+    if (digest !== subjectStateDigest(identity)) return null;
+    return report.subjectState;
+  } catch {
+    return null;
+  }
 }
 
 async function createSubjectState({ repositoryRecords, roots, governanceRecord, invariantDigest, exclusions }) {

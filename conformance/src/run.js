@@ -5,7 +5,7 @@ const args = process.argv.slice(2);
 const options = { providers: {} };
 for (let index = 0; index < args.length; index += 1) {
   const name = args[index];
-  if (!["--omniform", "--engine", "--os", "--company", "--github-provider", "--vercel-provider", "--provider", "--output", "--fail-on", "--report-kind", "--freshness"].includes(name)) usage(`Unknown option: ${name}`);
+  if (!["--omniform", "--engine", "--os", "--company", "--github-provider", "--vercel-provider", "--provider", "--output", "--certified-report", "--fail-on", "--report-kind", "--freshness"].includes(name)) usage(`Unknown option: ${name}`);
   const value = args[index + 1];
   if (!value || value.startsWith("--")) usage(`Missing value for ${name}`);
   if (name === "--freshness") {
@@ -14,7 +14,7 @@ for (let index = 0; index < args.length; index += 1) {
     const separator = value.indexOf("=");
     if (separator < 1 || separator === value.length - 1) usage("--provider requires name=path");
     options.providers[value.slice(0, separator)] = value.slice(separator + 1);
-  } else options[name.slice(2).replace("fail-on", "failOn").replace("github-provider", "githubProvider").replace("vercel-provider", "vercelProvider").replace("report-kind", "reportKind")] = value;
+  } else options[name.slice(2).replace("fail-on", "failOn").replace("github-provider", "githubProvider").replace("vercel-provider", "vercelProvider").replace("report-kind", "reportKind").replace("certified-report", "certifiedReport")] = value;
   index += 1;
 }
 
@@ -33,6 +33,6 @@ try {
 
 function usage(message) {
   console.error(message);
-  console.error("Usage: omniseed-conformance [--omniform path] [--engine path] [--os path] [--company path] [--github-provider path] [--vercel-provider path] [--provider name=path] [--output path] [--report-kind mainline|candidate] [--fail-on failed|warning]");
+  console.error("Usage: omniseed-conformance [--omniform path] [--engine path] [--os path] [--company path] [--github-provider path] [--vercel-provider path] [--provider name=path] [--output path] [--certified-report path] [--report-kind mainline|candidate] [--fail-on failed|warning]");
   process.exit(2);
 }
