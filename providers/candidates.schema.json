@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://omniseed.org/schemas/provider-candidates-v1.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["catalogueVersion", "statusSemantics", "candidates"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "catalogueVersion": { "const": "1.0" },
+    "statusSemantics": {
+      "type": "object", "additionalProperties": false,
+      "required": ["add_now", "prototype"],
+      "properties": {
+        "add_now": { "type": "string", "minLength": 1 },
+        "prototype": { "type": "string", "minLength": 1 }
+      }
+    },
+    "candidates": {
+      "type": "array", "minItems": 1,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["id", "organisation", "issue", "disposition", "primitiveFamilies", "products", "operations", "permissions", "evidence", "failureCases", "policyGuards", "portabilityPeers"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" },
+          "organisation": { "type": "string", "minLength": 1 },
+          "issue": { "type": "integer", "minimum": 1 },
+          "disposition": { "enum": ["add_now", "prototype"] },
+          "primitiveFamilies": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "enum": ["agents", "inference", "skills", "connectors", "workflows", "schedules", "policies", "observations", "memory", "identity", "machines"] } },
+          "products": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+          "operations": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "enum": ["plan", "apply", "observe", "invoke"] } },
+          "permissions": { "type": "object", "additionalProperties": false, "required": ["observe", "mutate"], "properties": { "observe": { "type": "array", "minItems": 1, "items": { "type": "string" } }, "mutate": { "type": "array", "items": { "type": "string" } } } },
+          "evidence": { "type": "array", "minItems": 4, "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+          "failureCases": { "type": "array", "minItems": 3, "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+          "policyGuards": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+          "portabilityPeers": { "type": "array", "uniqueItems": true, "items": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" } }
+        }
+      }
+    }
+  }
+}

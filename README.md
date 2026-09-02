@@ -17,7 +17,7 @@ The rulebook covers both governed loops: realisation plans change reality to mat
 - `constitution/` contains human- and machine-readable principles, invariants, and ownership boundaries.
 - `conformance/` contains the runner, report schema, rules, and tests.
 - `compatibility/` records compatible package lines.
-- `providers/` defines provider-package and provider-registry data contracts.
+- `providers/` defines provider-package and provider-registry data contracts, plus the non-runtime candidate contract catalogue.
 - `capabilities/` contains the governance-owned company capability reference catalogue. It is discovery/provenance material, not canonical company desired state.
 - `reports/latest.json` is the latest local conformance evidence.
 - `docs/` explains how to change the architecture safely.
