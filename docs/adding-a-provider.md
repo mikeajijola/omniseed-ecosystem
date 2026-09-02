@@ -14,6 +14,8 @@ Every Provider package publishes a static manifest that validates against [`prov
 
 Discovery means that a candidate exists. It does not install, configure, approve, or trust that candidate.
 
+Coordinator-approved candidates are recorded in [`providers/candidates.json`](../providers/candidates.json). This is a contract backlog, not a Provider package registry: each record fixes the supplying-organisation boundary, narrow family and operation surface, split observation/mutation permissions, minimum evidence, deterministic failure cases, policy guards, and portability peers. `add_now` authorizes implementation work and `prototype` authorizes only a bounded prototype. Neither disposition asserts installation, connection, health, capability, exact implementation revision, or live acceptance. Those claims require an independently supplied Provider package and evidence-producing acceptance process.
+
 The intended lifecycle is:
 
 ```text
