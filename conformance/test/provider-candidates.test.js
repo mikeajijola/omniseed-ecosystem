@@ -12,9 +12,9 @@ const keys = value => value && typeof value === "object" ? Object.entries(value)
 test("coordinated Provider candidates satisfy the strict contract catalogue", () => {
   const validate = new Ajv2020({ allErrors: true }).compile(schema);
   assert.equal(validate(catalogue), true, JSON.stringify(validate.errors));
-  assert.equal(catalogue.candidates.length, 9);
-  assert.equal(new Set(catalogue.candidates.map(candidate => candidate.id)).size, 9);
-  assert.deepEqual(catalogue.candidates.map(candidate => candidate.issue).sort((a, b) => a - b), [34, 35, 36, 37, 38, 39, 40, 41, 42]);
+  assert.equal(catalogue.candidates.length, 17);
+  assert.equal(new Set(catalogue.candidates.map(candidate => candidate.id)).size, 17);
+  assert.deepEqual(catalogue.candidates.map(candidate => candidate.issue).sort((a, b) => a - b), [34, 35, 36, 37, 38, 39, 40, 41, 42, 45, 46, 47, 48, 49, 50, 51, 52]);
 });
 
 test("candidate declarations preserve authority and evidence boundaries", () => {
@@ -40,5 +40,19 @@ test("portable families have reciprocal candidate peers", () => {
 test("prototype disposition cannot imply governed or live status", () => {
   assert.match(catalogue.statusSemantics.prototype, /not governed\/current/i);
   assert.match(catalogue.statusSemantics.add_now, /not installed.*live-accepted/i);
-  assert.deepEqual(catalogue.candidates.filter(candidate => candidate.disposition === "prototype").map(candidate => candidate.id).sort(), ["clerk", "inngest", "temporal"]);
+  assert.deepEqual(catalogue.candidates.filter(candidate => candidate.disposition === "prototype").map(candidate => candidate.id).sort(), ["cerbos", "clerk", "inngest", "microsoft", "styra", "temporal", "workos"]);
+});
+
+test("second-wave candidates retain issue-authorized family boundaries", () => {
+  const actual = Object.fromEntries(catalogue.candidates.filter(candidate => candidate.issue >= 45).map(candidate => [candidate.id, candidate.primitiveFamilies]));
+  assert.deepEqual(actual, {
+    aws: ["workflows", "schedules"],
+    salesforce: ["connectors"],
+    twilio: ["connectors"],
+    pinecone: ["memory"],
+    styra: ["policies"],
+    microsoft: ["agents"],
+    workos: ["identity"],
+    cerbos: ["policies"]
+  });
 });
