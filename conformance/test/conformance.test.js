@@ -7,6 +7,7 @@ import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { deriveFreshness, runConformance, subjectStateDigest } from "../src/index.js";
 import Ajv2020 from "ajv/dist/2020.js";
+import { parse } from "yaml";
 
 const workspace = resolve(new URL("../..", import.meta.url).pathname);
 const detectedProducts = existsSync(join(workspace, "omniform")) ? workspace : resolve(workspace, "..");
@@ -58,10 +59,35 @@ test("freshness is derived from exact subject state and fails closed", () => {
   assert.equal(deriveFreshness(state, state, "mainline", false), "indeterminate");
   assert.equal(deriveFreshness(state, null), "indeterminate");
   assert.equal(deriveFreshness(state, { ...state, complete: false }), "indeterminate");
+  assert.equal(deriveFreshness(state, { ...state, observationStable: false }), "indeterminate");
+});
+
+test("the authoritative Provider set pins every inclusion and explicitly excludes Google", async () => {
+  const configuration = parse(await readFile(join(workspace, "conformance/repositories.yaml"), "utf8"));
+  const providers = configuration.governed_providers;
+  assert.deepEqual(providers.map(item => item.id), ["githubProvider", "vercelProvider", "provider_neon", "provider_omniseed", "provider_omnicede", "provider_google"]);
+  for (const provider of providers.filter(item => item.status !== "excluded")) assert.match(provider.revision, /^[0-9a-f]{40}$/);
+  const google = providers.find(item => item.provider_id === "google");
+  assert.equal(google.status, "excluded");
+  assert.ok(google.rationale);
+  assert.equal(google.revision, undefined);
+});
+
+test("an undeclared Provider cannot silently expand the governed set", async () => {
+  await assert.rejects(runConformance({ providers: { invented: "/tmp/invented" }, output: false }), /not in the authoritative governed Provider set/);
 });
 
 test("a caller cannot force freshness", async () => {
   await assert.rejects(runConformance({ freshness: "current", output: false }), /cannot be supplied/);
+});
+
+test("a required freshness gate fails before replacing its certification source", async () => {
+  const fixture = await mkdtemp(join(tmpdir(), "omniseed-freshness-gate-"));
+  const output = join(fixture, "certified.json");
+  await writeFile(output, "preserved certification\n");
+  const repositories = await conformanceRepositories(fixture);
+  await assert.rejects(runConformance({ ...repositories, output, certifiedReport: output, requiredFreshness: "current" }), /observed indeterminate/);
+  assert.equal(await readFile(output, "utf8"), "preserved certification\n");
 });
 
 test("runConformance compares observed state with certified mainline evidence", async () => {
@@ -70,7 +96,7 @@ test("runConformance compares observed state with certified mainline evidence", 
   const repositories = await conformanceRepositories(fixture);
   const baseline = await runConformance({ ...repositories, output: false, certifiedReport });
   assert.equal(baseline.freshness, "indeterminate");
-  await writeFile(certifiedReport, JSON.stringify(baseline));
+  await writeFile(certifiedReport, JSON.stringify({ ...baseline, freshness: "current" }));
 
   const matching = await runConformance({ ...repositories, output: false, certifiedReport });
   assert.equal(matching.freshness, "current");
