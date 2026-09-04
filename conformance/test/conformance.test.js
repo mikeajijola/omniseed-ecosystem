@@ -5,8 +5,9 @@ import { existsSync } from "node:fs";
 import { cp, mkdir, mkdtemp, readFile, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
-import { runConformance } from "../src/index.js";
+import { deriveFreshness, runConformance, subjectStateDigest } from "../src/index.js";
 import Ajv2020 from "ajv/dist/2020.js";
+import { parse } from "yaml";
 
 const workspace = resolve(new URL("../..", import.meta.url).pathname);
 const detectedProducts = existsSync(join(workspace, "omniform")) ? workspace : resolve(workspace, "..");
@@ -47,7 +48,96 @@ test("generated OS runtime output is not treated as authored Provider-bypass sou
 });
 
 test("candidate evidence cannot overwrite canonical mainline evidence", async () => {
-  await assert.rejects(runConformance({ reportKind: "candidate", freshness: "candidate", output: join(workspace, "reports/main/latest.json") }), /cannot overwrite canonical mainline evidence/);
+  await assert.rejects(runConformance({ reportKind: "candidate", output: join(workspace, "reports/main/latest.json") }), /cannot overwrite canonical mainline evidence/);
+});
+
+test("freshness is derived from exact subject state and fails closed", () => {
+  const state = { complete: true, digest: `sha256:${"a".repeat(64)}` };
+  assert.equal(deriveFreshness(state, state), "current");
+  assert.equal(deriveFreshness(state, { complete: true, digest: `sha256:${"b".repeat(64)}` }), "stale");
+  assert.equal(deriveFreshness(state, state, "candidate"), "candidate");
+  assert.equal(deriveFreshness(state, state, "mainline", false), "indeterminate");
+  assert.equal(deriveFreshness(state, null), "indeterminate");
+  assert.equal(deriveFreshness(state, { ...state, complete: false }), "indeterminate");
+  assert.equal(deriveFreshness(state, { ...state, observationStable: false }), "indeterminate");
+});
+
+test("the authoritative Provider set pins every inclusion and explicitly excludes Google", async () => {
+  const configuration = parse(await readFile(join(workspace, "conformance/repositories.yaml"), "utf8"));
+  const providers = configuration.governed_providers;
+  assert.deepEqual(providers.map(item => item.id), ["githubProvider", "vercelProvider", "provider_neon", "provider_omniseed", "provider_omnicede", "provider_google"]);
+  for (const provider of providers.filter(item => item.status !== "excluded")) assert.match(provider.revision, /^[0-9a-f]{40}$/);
+  const google = providers.find(item => item.provider_id === "google");
+  assert.equal(google.status, "excluded");
+  assert.ok(google.rationale);
+  assert.equal(google.revision, undefined);
+});
+
+test("an undeclared Provider cannot silently expand the governed set", async () => {
+  await assert.rejects(runConformance({ providers: { invented: "/tmp/invented" }, output: false }), /not in the authoritative governed Provider set/);
+});
+
+test("a caller cannot force freshness", async () => {
+  await assert.rejects(runConformance({ freshness: "current", output: false }), /cannot be supplied/);
+});
+
+test("a required freshness gate fails before replacing its certification source", async () => {
+  const fixture = await mkdtemp(join(tmpdir(), "omniseed-freshness-gate-"));
+  const output = join(fixture, "certified.json");
+  await writeFile(output, "preserved certification\n");
+  const repositories = await conformanceRepositories(fixture);
+  await assert.rejects(runConformance({ ...repositories, output, certifiedReport: output, requiredFreshness: "current" }), /observed indeterminate/);
+  assert.equal(await readFile(output, "utf8"), "preserved certification\n");
+});
+
+test("runConformance compares observed state with certified mainline evidence", async () => {
+  const fixture = await mkdtemp(join(tmpdir(), "omniseed-certified-report-"));
+  const certifiedReport = join(fixture, "latest.json");
+  const repositories = await conformanceRepositories(fixture);
+  const baseline = await runConformance({ ...repositories, output: false, certifiedReport });
+  assert.equal(baseline.freshness, "indeterminate");
+  await writeFile(certifiedReport, JSON.stringify({ ...baseline, freshness: "current" }));
+
+  const matching = await runConformance({ ...repositories, output: false, certifiedReport });
+  assert.equal(matching.freshness, "current");
+
+  const engine = repositories.engine;
+  await writeFile(join(engine, "freshness-drift.txt"), "changed certified subject\n");
+  execFileSync("git", ["-C", engine, "add", "."]);
+  execFileSync("git", ["-C", engine, "-c", "user.name=Conformance Test", "-c", "user.email=test@example.invalid", "commit", "-qm", "drift"]);
+  const drifted = await runConformance({ ...repositories, output: false, certifiedReport });
+  assert.equal(drifted.freshness, "stale");
+});
+
+test("invalid certified evidence fails closed", async () => {
+  const fixture = await mkdtemp(join(tmpdir(), "omniseed-invalid-certification-"));
+  const certifiedReport = join(fixture, "latest.json");
+  const repositories = await conformanceRepositories(fixture);
+  const baseline = await runConformance({ ...repositories, output: false, certifiedReport });
+  await writeFile(certifiedReport, JSON.stringify({ ...baseline, subjectState: { ...baseline.subjectState, digest: `sha256:${"0".repeat(64)}` } }));
+  assert.equal((await runConformance({ ...repositories, output: false, certifiedReport })).freshness, "indeterminate");
+});
+
+test("core, Provider, governed-set, package, and invariant changes stale prior evidence", () => {
+  const identity = {
+    complete: true,
+    invariantDigest: `sha256:${"1".repeat(64)}`,
+    subjects: [
+      { id: "omniform", kind: "core", revision: "a".repeat(40) },
+      { id: "provider_github", kind: "provider", revision: "b".repeat(40), providerId: "github", packageVersion: "1.0.0", packageDigest: `sha256:${"2".repeat(64)}` }
+    ],
+    governedProviderSet: [{ id: "provider_github", status: "included", providerId: "github", rationale: null }]
+  };
+  const certified = { ...identity, digest: subjectStateDigest(identity) };
+  for (const observedIdentity of [
+    { ...identity, subjects: [{ ...identity.subjects[0], revision: "c".repeat(40) }, identity.subjects[1]] },
+    { ...identity, subjects: [identity.subjects[0], { ...identity.subjects[1], revision: "d".repeat(40) }] },
+    { ...identity, subjects: [identity.subjects[0], { ...identity.subjects[1], packageVersion: "1.0.1", packageDigest: `sha256:${"3".repeat(64)}` }] },
+    { ...identity, governedProviderSet: [...identity.governedProviderSet, { id: "provider_google", status: "excluded", providerId: null, rationale: "not supplied" }] },
+    { ...identity, invariantDigest: `sha256:${"4".repeat(64)}` }
+  ]) {
+    assert.equal(deriveFreshness(certified, { ...observedIdentity, digest: subjectStateDigest(observedIdentity) }), "stale");
+  }
 });
 
 test("company without PR-governed Git authority fails COMPANY-001", async () => {
@@ -285,4 +375,16 @@ function commitFixture(fixture) {
   execFileSync("git", ["init", "-q", fixture]);
   execFileSync("git", ["-C", fixture, "add", "."]);
   execFileSync("git", ["-C", fixture, "-c", "user.name=Conformance Test", "-c", "user.email=test@example.invalid", "commit", "-qm", "fixture"]);
+}
+
+async function conformanceRepositories(directory) {
+  const repositories = {};
+  for (const [option, name] of [["omniform", "omniform"], ["engine", "omniseed"], ["os", "omniseedos"]]) {
+    const path = join(directory, name);
+    await mkdir(path);
+    await writeFile(join(path, "package.json"), JSON.stringify({ name, version: "1.0.0" }));
+    commitFixture(path);
+    repositories[option] = path;
+  }
+  return repositories;
 }

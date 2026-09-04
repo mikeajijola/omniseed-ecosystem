@@ -19,7 +19,7 @@ The rulebook covers both governed loops: realisation plans change reality to mat
 - `compatibility/` records compatible package lines.
 - `providers/` defines provider-package and provider-registry data contracts, plus the non-runtime candidate contract catalogue.
 - `capabilities/` contains the governance-owned company capability reference catalogue. It is discovery/provenance material, not canonical company desired state.
-- `reports/latest.json` is the latest local conformance evidence.
+- `reports/main/latest.json` is the canonical mainline conformance evidence; candidate evidence must use a separate path.
 - `docs/` explains how to change the architecture safely.
 
 ## Run it
@@ -41,7 +41,7 @@ npx omniseed-conformance \
   --os ../omniseedos
 ```
 
-The command writes `reports/latest.json`. A failed deterministic invariant exits with a non-zero status. Warnings remain visible without pretending that a judgment is a machine-proven failure.
+The command writes the canonical mainline report under `reports/main/latest.json`. Provider membership, exact revisions, and explicit exclusions are resolved from `conformance/repositories.yaml`, including Google's machine-readable exclusion. Freshness compares immutable observations before and after execution—core, company, governance, Provider packages, and the invariant digest—with the previously certified mainline report. The production default reads that baseline before atomically replacing the output; `--certified-report path` restores it from another read-only location. Missing, invalid, incomplete, dirty, or execution-mutated evidence is `indeterminate`, matching evidence is `current`, and stable drift is `stale`; callers never supply the result. The compatibility flag `--freshness current` is a gate on the derived result, not an assertion, so CI cannot publish when restoration failed. A failed deterministic invariant exits with a non-zero status. Warnings remain visible without pretending that a judgment is a machine-proven failure.
 
 The latest CI-generated report is published for machines at <https://mikeajijola.github.io/omniseed-ecosystem/conformance/latest.json> and for people at <https://mikeajijola.github.io/omniseed-ecosystem/conformance/>.
 

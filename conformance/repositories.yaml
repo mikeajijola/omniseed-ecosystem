@@ -7,5 +7,32 @@ repositories:
   vercel_provider: ../omniseed-provider-vercel
   neon_provider: ../omniseed-provider-neon
   omniseed_provider: ../omniseed-provider-omniseed
+  google_provider: ../omniseed-provider-google
   omnicede_provider: ../omnicede
   ecosystem_company: ../omniseed-ecosystem-company
+governed_providers:
+  - id: githubProvider
+    provider_id: github
+    repository: github_provider
+    revision: 73aa6a1d088a24230fba42dc894d723752b1736c
+  - id: vercelProvider
+    provider_id: vercel
+    repository: vercel_provider
+    revision: 6a65f743db11b72fb95c612766b69813ea33c0da
+  - id: provider_neon
+    provider_id: neon
+    repository: neon_provider
+    revision: b8cc57f9411d0cd52732be267b75d4b1da1188f2
+  - id: provider_omniseed
+    provider_id: omniseed
+    repository: omniseed_provider
+    revision: bfa20da6f2e69e183c491b146897c0afd16344fa
+  - id: provider_omnicede
+    provider_id: omnicede
+    repository: omnicede_provider
+    revision: 20681f2c942c8a6d3bd23b693105992a08e69c3e
+  - id: provider_google
+    provider_id: google
+    repository: google_provider
+    status: excluded
+    rationale: "The Google Provider repository is not yet supplied to canonical conformance."

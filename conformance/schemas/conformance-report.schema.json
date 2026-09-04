@@ -4,12 +4,26 @@
   "title": "OmniSeed Ecosystem Conformance Report",
   "type": "object",
   "additionalProperties": false,
-  "required": ["ecosystemVersion", "generatedAt", "reportKind", "freshness", "governance", "repositories", "summary", "findings"],
+  "required": ["ecosystemVersion", "generatedAt", "reportKind", "freshness", "subjectState", "governance", "repositories", "summary", "findings"],
   "properties": {
     "ecosystemVersion": { "type": "string", "const": "1" },
     "generatedAt": { "type": "string", "format": "date-time" },
     "reportKind": { "enum": ["mainline", "candidate"] },
-    "freshness": { "enum": ["current", "stale", "candidate", "historical", "unknown"] },
+    "freshness": { "enum": ["current", "stale", "candidate", "indeterminate"] },
+    "subjectState": {
+      "type": "object", "additionalProperties": false,
+      "required": ["complete", "invariantDigest", "subjects", "governedProviderSet", "digest", "beforeDigest", "afterDigest", "observationStable"],
+      "properties": {
+        "complete": { "type": "boolean" },
+        "invariantDigest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+        "digest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+        "beforeDigest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+        "afterDigest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+        "observationStable": { "type": "boolean" },
+        "subjects": { "type": "array", "items": { "$ref": "#/$defs/subject" } },
+        "governedProviderSet": { "type": "array", "items": { "$ref": "#/$defs/providerSubject" } }
+      }
+    },
     "governance": {
       "type": "object",
       "additionalProperties": false,
@@ -56,6 +70,24 @@
     }
   },
   "$defs": {
+    "subject": {
+      "type": "object", "additionalProperties": false, "required": ["id", "kind"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 }, "kind": { "enum": ["core", "company", "governance", "provider"] },
+        "revision": { "type": "string", "pattern": "^[0-9a-f]{40}$" }, "expectedRevision": { "type": "string", "pattern": "^[0-9a-f]{40}$" }, "status": { "enum": ["excluded", "unavailable"] },
+        "providerId": { "type": "string", "minLength": 1 }, "packageVersion": { "type": "string", "minLength": 1 },
+        "packageDigest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" }, "rationale": { "type": "string", "minLength": 1 }
+      }, "oneOf": [
+        { "properties": { "revision": {} }, "required": ["revision"] },
+        { "properties": { "status": { "const": "excluded" }, "rationale": {} }, "required": ["status", "rationale"] },
+        { "properties": { "status": { "const": "unavailable" }, "expectedRevision": {}, "rationale": {} }, "required": ["status", "expectedRevision", "rationale"] }
+      ]
+    },
+    "providerSubject": {
+      "type": "object", "additionalProperties": false,
+      "properties": { "id": { "type": "string" }, "status": { "enum": ["included", "excluded"] }, "providerId": { "type": ["string", "null"] }, "revision": { "type": ["string", "null"], "pattern": "^[0-9a-f]{40}$" }, "rationale": { "type": ["string", "null"] } },
+      "required": ["id", "status", "providerId", "revision", "rationale"]
+    },
     "repository": {
       "type": "object",
       "additionalProperties": false,
