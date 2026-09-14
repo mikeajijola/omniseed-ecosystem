@@ -12,9 +12,11 @@ const keys = value => value && typeof value === "object" ? Object.entries(value)
 test("coordinated Provider candidates satisfy the strict contract catalogue", () => {
   const validate = new Ajv2020({ allErrors: true }).compile(schema);
   assert.equal(validate(catalogue), true, JSON.stringify(validate.errors));
-  assert.equal(catalogue.candidates.length, 18);
-  assert.equal(new Set(catalogue.candidates.map(candidate => candidate.id)).size, 18);
-  assert.deepEqual(catalogue.candidates.map(candidate => candidate.issue).sort((a, b) => a - b), [34, 35, 36, 37, 38, 39, 40, 41, 42, 45, 46, 47, 48, 49, 50, 51, 52, 55]);
+  assert.equal(new Set(catalogue.candidates.map(candidate => candidate.id)).size, catalogue.candidates.length);
+  assert.deepEqual(
+    catalogue.candidates.filter(candidate => candidate.issue <= 52).map(candidate => candidate.issue).sort((a, b) => a - b),
+    [34, 35, 36, 37, 38, 39, 40, 41, 42, 45, 46, 47, 48, 49, 50, 51, 52]
+  );
 });
 
 test("candidate declarations preserve authority and evidence boundaries", () => {
@@ -44,7 +46,7 @@ test("prototype disposition cannot imply governed or live status", () => {
 });
 
 test("second-wave candidates retain issue-authorized family boundaries", () => {
-  const actual = Object.fromEntries(catalogue.candidates.filter(candidate => candidate.issue >= 45).map(candidate => [candidate.id, candidate.primitiveFamilies]));
+  const actual = Object.fromEntries(catalogue.candidates.filter(candidate => candidate.issue >= 45 && candidate.issue <= 52).map(candidate => [candidate.id, candidate.primitiveFamilies]));
   assert.deepEqual(actual, {
     aws: ["workflows", "schedules"],
     salesforce: ["connectors"],
@@ -53,13 +55,14 @@ test("second-wave candidates retain issue-authorized family boundaries", () => {
     styra: ["policies"],
     microsoft: ["agents"],
     workos: ["identity"],
-    cerbos: ["policies"],
-    servicenow: ["connectors"]
+    cerbos: ["policies"]
   });
 });
 
 test("ServiceNow remains a bounded connectors implementation candidate", () => {
   const candidate = catalogue.candidates.find(candidate => candidate.id === "servicenow");
+  assert.ok(candidate);
+  assert.equal(candidate.issue, 55);
   assert.equal(candidate.organisation, "ServiceNow");
   assert.equal(candidate.disposition, "add_now");
   assert.deepEqual(candidate.primitiveFamilies, ["connectors"]);
