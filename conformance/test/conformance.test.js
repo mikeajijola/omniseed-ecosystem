@@ -5,7 +5,7 @@ import { existsSync } from "node:fs";
 import { cp, mkdir, mkdtemp, readFile, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
-import { deriveFreshness, migrateLegacyCertifiedSubjectState, runConformance, subjectStateDigest } from "../src/index.js";
+import { deriveFreshness, migrateLegacyCertifiedSubjectState, runConformance, subjectStateDigest, subjectStateForComparison } from "../src/index.js";
 import Ajv2020 from "ajv/dist/2020.js";
 import { parse } from "yaml";
 
@@ -115,6 +115,24 @@ test("runConformance compares observed state with certified mainline evidence", 
   execFileSync("git", ["-C", engine, "-c", "user.name=Conformance Test", "-c", "user.email=test@example.invalid", "commit", "-qm", "drift"]);
   const drifted = await runConformance({ ...repositories, output: false, certifiedReport });
   assert.equal(drifted.freshness, "stale");
+});
+
+test("a later governance commit can certify unchanged ecosystem subject state", () => {
+  const ecosystemIdentity = {
+    complete: true,
+    invariantDigest: `sha256:${"1".repeat(64)}`,
+    subjects: [{ id: "omniseed", kind: "core", revision: "a".repeat(40) }],
+    governedProviderSet: []
+  };
+  const observed = { ...ecosystemIdentity, digest: subjectStateDigest(ecosystemIdentity), observationStable: true };
+  const previousIdentity = {
+    ...ecosystemIdentity,
+    subjects: [{ id: "governance", kind: "governance", revision: "b".repeat(40) }, ...ecosystemIdentity.subjects]
+  };
+  const previousDigest = subjectStateDigest(previousIdentity);
+  const certifiedAtPreviousGovernanceCommit = { ...previousIdentity, digest: previousDigest, beforeDigest: previousDigest, afterDigest: previousDigest, observationStable: true };
+
+  assert.equal(deriveFreshness(subjectStateForComparison(certifiedAtPreviousGovernanceCommit), observed), "current");
 });
 
 test("a clean legacy mainline report bootstraps the subject-state format once", () => {

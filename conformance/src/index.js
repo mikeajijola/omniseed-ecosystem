@@ -42,7 +42,7 @@ export async function runConformance(options = {}) {
   const compatibility = parse(await readFile(join(root, "compatibility/packages.yaml"), "utf8"));
   validatePublicationSupport(repositoryConfiguration, compatibility);
   const repositoryMetadata = metadataForRoots(repositoryConfiguration, roots);
-  const before = await createSubjectIdentity({ repositoryRecords: recordsFor(roots, repositoryMetadata), roots, governanceRecord: repositoryRecord(root, root), invariantDigest, governedProviders, repositoryMetadata, publications: repositoryConfiguration.publications, support: repositoryConfiguration.support });
+  const before = await createSubjectIdentity({ repositoryRecords: recordsFor(roots, repositoryMetadata), roots, invariantDigest, governedProviders, repositoryMetadata, publications: repositoryConfiguration.publications, support: repositoryConfiguration.support });
   const context = await buildContext(roots, compatibility);
   const findings = [];
 
@@ -67,7 +67,7 @@ export async function runConformance(options = {}) {
   const repositoryRecords = recordsFor(roots, repositoryMetadata);
   const governanceRecord = repositoryRecord(root, root);
   const exactTree = governanceRecord.clean && Object.values(repositoryRecords).every(item => item.clean);
-  const after = await createSubjectIdentity({ repositoryRecords, roots, governanceRecord, invariantDigest, governedProviders, repositoryMetadata, publications: repositoryConfiguration.publications, support: repositoryConfiguration.support });
+  const after = await createSubjectIdentity({ repositoryRecords, roots, invariantDigest, governedProviders, repositoryMetadata, publications: repositoryConfiguration.publications, support: repositoryConfiguration.support });
   const subjectState = createSubjectState(before, after);
   const reportKind = options.reportKind ?? "mainline";
   const canonicalMainline = resolve(join(root, "reports/main/latest.json"));
@@ -119,7 +119,7 @@ async function readCertifiedSubjectState(path, observedSubjectState) {
     const { digest, beforeDigest, afterDigest, observationStable, ...identity } = report.subjectState;
     if (digest !== subjectStateDigest(identity)) return null;
     if (afterDigest !== digest || !observationStable) return null;
-    return report.subjectState;
+    return subjectStateForComparison(report.subjectState);
   } catch {
     return null;
   }
@@ -137,9 +137,9 @@ export function migrateLegacyCertifiedSubjectState(report, observed) {
   return observed;
 }
 
-async function createSubjectIdentity({ repositoryRecords, roots, governanceRecord, invariantDigest, governedProviders, repositoryMetadata, publications, support }) {
+async function createSubjectIdentity({ repositoryRecords, roots, invariantDigest, governedProviders, repositoryMetadata, publications, support }) {
   let complete = true;
-  const subjects = [{ id: "governance", kind: "governance", revision: governanceRecord.commit }];
+  const subjects = [];
   for (const [id, record] of Object.entries(repositoryRecords).filter(([id]) => !governedProviders.some(provider => provider.id === id))) {
     const metadata = repositoryMetadata[id];
     const publication = publications[id];
@@ -191,6 +191,13 @@ export function deriveFreshness(certified, observed, reportKind = "mainline", ex
   if (reportKind === "candidate") return "candidate";
   if (!certified || !observed || !exactTree || !certified.complete || !observed.complete || observed.observationStable === false || !certified.digest || !observed.digest) return "indeterminate";
   return certified.digest === observed.digest ? "current" : "stale";
+}
+
+export function subjectStateForComparison(state) {
+  const { digest, beforeDigest, afterDigest, observationStable, ...identity } = state;
+  const comparableIdentity = { ...identity, subjects: identity.subjects.filter(subject => subject.kind !== "governance") };
+  const comparableDigest = subjectStateDigest(comparableIdentity);
+  return { ...comparableIdentity, digest: comparableDigest, beforeDigest: comparableDigest, afterDigest: comparableDigest, observationStable: true };
 }
 
 export function subjectStateDigest(value) {
