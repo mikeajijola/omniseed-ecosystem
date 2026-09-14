@@ -62,11 +62,19 @@ test("freshness is derived from exact subject state and fails closed", () => {
   assert.equal(deriveFreshness(state, { ...state, observationStable: false }), "indeterminate");
 });
 
-test("the authoritative Provider set pins every inclusion and explicitly excludes Google", async () => {
+test("authoritative repositories separate source identity, publication, support, and complete Provider membership", async () => {
   const configuration = parse(await readFile(join(workspace, "conformance/repositories.yaml"), "utf8"));
   const providers = configuration.governed_providers;
   assert.deepEqual(providers.map(item => item.id), ["githubProvider", "vercelProvider", "provider_neon", "provider_omniseed", "provider_omnicede", "provider_google"]);
-  for (const provider of providers.filter(item => item.status !== "excluded")) assert.match(provider.revision, /^[0-9a-f]{40}$/);
+  for (const provider of providers.filter(item => item.status !== "excluded")) {
+    assert.match(provider.revision, /^[0-9a-f]{40}$/);
+    assert.equal(configuration.repositories[provider.repository].ref, provider.revision);
+    assert.equal(configuration.repositories[provider.repository].classification, "provider");
+  }
+  assert.equal(configuration.repositories.omnicede_provider.classification, "provider");
+  assert.deepEqual(Object.keys(configuration.publications), ["omniform", "omniseed", "omniseedos"]);
+  assert.equal(configuration.support.channel, "generation-1-inference-alpha");
+  assert.equal(configuration.support.status, "supported");
   const google = providers.find(item => item.provider_id === "google");
   assert.equal(google.status, "excluded");
   assert.ok(google.rationale);

@@ -92,6 +92,11 @@ jobs:
       - name: Test
         run: npm test
         working-directory: omniseed-ecosystem
+      - name: Restore certified mainline baseline
+        run: >-
+          curl --fail --silent --show-error
+          https://mikeajijola.github.io/omniseed-ecosystem/conformance/latest.json
+          --output "$RUNNER_TEMP/omniseed-certified-mainline.json"
       - name: Run conformance
         run: >-
           npm run conformance --
@@ -104,6 +109,7 @@ jobs:
           --provider omniseed=../omniseed-provider-omniseed
           --provider omnicede=../omnicede
           --company ../omniseed-ecosystem-company
+          --certified-report "$RUNNER_TEMP/omniseed-certified-mainline.json"
           --report-kind mainline
           --freshness current
           --output reports/main/latest.json

@@ -13,6 +13,7 @@ const root = resolve(new URL("../..", import.meta.url).pathname);
 export async function runConformance(options = {}) {
   if (Object.hasOwn(options, "freshness")) throw new Error("Freshness is derived from observed subject state and cannot be supplied");
   const repositoryConfiguration = parse(await readFile(join(root, "conformance/repositories.yaml"), "utf8"));
+  validateRepositoryConfiguration(repositoryConfiguration);
   const suppliedProviders = Object.fromEntries(Object.entries(options.providers ?? {}).map(([name, path]) => {
     if (!/^[a-z][a-z0-9_]*$/.test(name)) throw new Error(`Invalid Provider repository key: ${name}`);
     return [`provider_${name}`, resolve(path)];
@@ -24,7 +25,7 @@ export async function runConformance(options = {}) {
   const configuredProviders = Object.fromEntries(governedProviders.filter(item => item.status !== "excluded").flatMap(item => {
     const explicit = item.id === "githubProvider" ? options.githubProvider : item.id === "vercelProvider" ? options.vercelProvider : suppliedProviders[item.id];
     const configured = repositoryConfiguration.repositories[item.repository];
-    const path = explicit ? resolve(explicit) : configured ? resolve(root, configured) : null;
+    const path = explicit ? resolve(explicit) : configured ? resolve(root, configured.path) : null;
     return path && existsSync(path) ? [[item.id, path]] : [];
   }));
   const roots = {
@@ -39,7 +40,9 @@ export async function runConformance(options = {}) {
   const catalogue = parse(invariantsSource);
   const runner = JSON.parse(await readFile(join(root, "package.json"), "utf8"));
   const compatibility = parse(await readFile(join(root, "compatibility/packages.yaml"), "utf8"));
-  const before = await createSubjectIdentity({ repositoryRecords: recordsFor(roots), roots, governanceRecord: repositoryRecord(root, root), invariantDigest, governedProviders });
+  validatePublicationSupport(repositoryConfiguration, compatibility);
+  const repositoryMetadata = metadataForRoots(repositoryConfiguration, roots);
+  const before = await createSubjectIdentity({ repositoryRecords: recordsFor(roots, repositoryMetadata), roots, governanceRecord: repositoryRecord(root, root), invariantDigest, governedProviders, repositoryMetadata, publications: repositoryConfiguration.publications, support: repositoryConfiguration.support });
   const context = await buildContext(roots, compatibility);
   const findings = [];
 
@@ -61,10 +64,10 @@ export async function runConformance(options = {}) {
     }
   }
 
-  const repositoryRecords = recordsFor(roots);
+  const repositoryRecords = recordsFor(roots, repositoryMetadata);
   const governanceRecord = repositoryRecord(root, root);
   const exactTree = governanceRecord.clean && Object.values(repositoryRecords).every(item => item.clean);
-  const after = await createSubjectIdentity({ repositoryRecords, roots, governanceRecord, invariantDigest, governedProviders });
+  const after = await createSubjectIdentity({ repositoryRecords, roots, governanceRecord, invariantDigest, governedProviders, repositoryMetadata, publications: repositoryConfiguration.publications, support: repositoryConfiguration.support });
   const subjectState = createSubjectState(before, after);
   const reportKind = options.reportKind ?? "mainline";
   const canonicalMainline = resolve(join(root, "reports/main/latest.json"));
@@ -121,20 +124,25 @@ async function readCertifiedSubjectState(path) {
   }
 }
 
-async function createSubjectIdentity({ repositoryRecords, roots, governanceRecord, invariantDigest, governedProviders }) {
+async function createSubjectIdentity({ repositoryRecords, roots, governanceRecord, invariantDigest, governedProviders, repositoryMetadata, publications, support }) {
   let complete = true;
   const subjects = [{ id: "governance", kind: "governance", revision: governanceRecord.commit }];
   for (const [id, record] of Object.entries(repositoryRecords).filter(([id]) => !governedProviders.some(provider => provider.id === id))) {
-    const subject = { id, kind: id.toLowerCase().includes("provider") ? "provider" : id === "company" ? "company" : "core", revision: record.commit };
+    const metadata = repositoryMetadata[id];
+    const publication = publications[id];
+    const subject = { id, kind: metadata.classification === "company" ? "company" : metadata.classification === "provider" ? "provider" : "core", repository: metadata.repository, ref: metadata.ref, revision: record.commit };
+    if (publication) subject.publication = { ...publication, supportChannel: support.channel, supportStatus: support.status };
     subjects.push(subject);
   }
   for (const provider of governedProviders) {
     if (provider.status === "excluded") {
-      subjects.push({ id: provider.id, kind: "provider", providerId: provider.provider_id, status: "excluded", rationale: provider.rationale });
+      const metadata = repositoryMetadata[provider.id];
+      subjects.push({ id: provider.id, kind: "provider", repository: metadata.repository, ref: metadata.ref, providerId: provider.provider_id, status: "excluded", rationale: provider.rationale });
       continue;
     }
     const record = repositoryRecords[provider.id];
-    const subject = { id: provider.id, kind: "provider", providerId: provider.provider_id, expectedRevision: provider.revision };
+    const metadata = repositoryMetadata[provider.id];
+    const subject = { id: provider.id, kind: "provider", repository: metadata.repository, ref: metadata.ref, providerId: provider.provider_id, expectedRevision: provider.revision };
     if (!record) {
       complete = false;
       subject.status = "unavailable";
@@ -190,8 +198,14 @@ function companyRepository(explicit) {
   return existsSync(candidate) ? candidate : null;
 }
 
-function recordsFor(roots) {
-  return Object.fromEntries(Object.entries(roots).map(([name, path]) => [name, repositoryRecord(path, root)]));
+function metadataForRoots(configuration, roots) {
+  const keys = { omniform: "omniform", omniseed: "engine", omniseedos: "os", company: "ecosystem_company" };
+  for (const provider of configuration.governed_providers) keys[provider.id] = provider.repository;
+  return Object.fromEntries(Object.keys(keys).filter(id => roots[id] || configuration.governed_providers.some(provider => provider.id === id)).map(id => [id, configuration.repositories[keys[id]]]));
+}
+
+function recordsFor(roots, metadata = {}) {
+  return Object.fromEntries(Object.entries(roots).map(([name, path]) => [name, repositoryRecord(path, root, metadata[name])]));
 }
 
 function validateGovernedProviders(providers, repositories) {
@@ -199,11 +213,28 @@ function validateGovernedProviders(providers, repositories) {
   for (const provider of providers) {
     if (!provider.id || ids.has(provider.id)) throw new Error(`Invalid or duplicate governed Provider id: ${provider.id}`);
     ids.add(provider.id);
-    if (!provider.provider_id || !provider.repository || !repositories[provider.repository]) throw new Error(`Governed Provider ${provider.id} has no authoritative repository`);
+    if (!provider.provider_id || !provider.repository || repositories[provider.repository]?.classification !== "provider") throw new Error(`Governed Provider ${provider.id} has no authoritative Provider repository`);
     if (provider.status === "excluded") {
       if (!provider.rationale || provider.revision) throw new Error(`Excluded Provider ${provider.id} requires rationale and no revision`);
-    } else if (!/^[0-9a-f]{40}$/.test(provider.revision ?? "")) throw new Error(`Included Provider ${provider.id} requires an exact revision`);
+    } else if (!/^[0-9a-f]{40}$/.test(provider.revision ?? "") || repositories[provider.repository].ref !== provider.revision) throw new Error(`Included Provider ${provider.id} requires one matching exact repository ref and revision`);
   }
+}
+
+function validateRepositoryConfiguration(configuration) {
+  if (configuration.version !== 2) throw new Error("Unsupported repository configuration version");
+  for (const [id, item] of Object.entries(configuration.repositories ?? {})) {
+    if (!item.path || !/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(item.repository ?? "") || !item.ref || !["product", "provider", "company"].includes(item.classification)) throw new Error(`Invalid authoritative repository configuration: ${id}`);
+  }
+  const channel = configuration.support?.channel;
+  if (!channel || configuration.support.status !== "supported") throw new Error("A supported publication channel is required");
+  for (const id of ["omniform", "omniseed", "omniseedos"]) if (!configuration.publications?.[id]?.package || !configuration.publications[id].version) throw new Error(`Publication metadata is missing for ${id}`);
+}
+
+function validatePublicationSupport(configuration, compatibility) {
+  const supported = compatibility.channels?.[configuration.support.channel];
+  if (!supported || supported.status !== configuration.support.status) throw new Error(`Configured support channel ${configuration.support.channel} is not supported`);
+  const compatibilityKeys = { omniform: "omniform", omniseed: "engine", omniseedos: "os" };
+  for (const [id, key] of Object.entries(compatibilityKeys)) if (configuration.publications[id].version !== supported[key]) throw new Error(`Publication ${id}@${configuration.publications[id].version} does not match supported channel ${configuration.support.channel}`);
 }
 
 async function buildContext(roots, compatibility) {
@@ -231,8 +262,9 @@ async function sourceFiles(directory, base = directory) {
   return output.sort();
 }
 
-function repositoryRecord(path, relativeTo) {
+function repositoryRecord(path, relativeTo, metadata) {
   return {
+    ...(metadata ? { repository: metadata.repository, ref: metadata.ref, classification: metadata.classification } : {}),
     commit: execFileSync("git", ["-C", path, "rev-parse", "HEAD"], { encoding: "utf8" }).trim(),
     clean: execFileSync("git", ["-C", path, "status", "--porcelain"], { encoding: "utf8" }).trim() === "",
     path: relative(relativeTo, path) || "."

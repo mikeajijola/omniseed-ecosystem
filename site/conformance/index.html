@@ -40,7 +40,13 @@
         const time = document.createElement("p"); time.textContent = `Generated ${report.generatedAt}`; target.append(time);
         const subjectsHeading = document.createElement("h2"); subjectsHeading.textContent = "Certified subjects"; target.append(subjectsHeading);
         const subjects = document.createElement("ul");
-        report.subjectState.subjects.forEach(item => { const entry = document.createElement("li"); entry.textContent = item.status ? `${item.id} (${item.providerId}) — ${item.status}: ${item.rationale}` : `${item.id} — ${item.revision}${item.expectedRevision ? ` (governed revision ${item.expectedRevision})` : ""}${item.packageVersion ? ` (package ${item.packageVersion})` : ""}`; subjects.append(entry); });
+        report.subjectState.subjects.forEach(item => {
+          const entry = document.createElement("li");
+          const source = item.repository ? `${item.repository}@${item.ref}` : item.id;
+          const publication = item.publication ? `; publication ${item.publication.package}@${item.publication.version} (${item.publication.supportStatus} in ${item.publication.supportChannel})` : "";
+          entry.textContent = item.status ? `${source} (${item.providerId ?? item.kind}) — ${item.status}: ${item.rationale}` : `${source} → ${item.revision}${item.expectedRevision ? ` (governed revision ${item.expectedRevision})` : ""}${item.packageVersion ? ` (Provider package ${item.packageVersion})` : ""}${publication}`;
+          subjects.append(entry);
+        });
         target.append(subjects);
         const subheading = document.createElement("h2"); subheading.textContent = "Open review items"; target.append(subheading);
         const list = document.createElement("ul");

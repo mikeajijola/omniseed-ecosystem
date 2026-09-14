@@ -1,15 +1,22 @@
-version: 1
+version: 2
 repositories:
-  omniform: ./omniform
-  engine: ./omniseed
-  os: ./omniseedos
-  github_provider: ../omniseed-provider-github
-  vercel_provider: ../omniseed-provider-vercel
-  neon_provider: ../omniseed-provider-neon
-  omniseed_provider: ../omniseed-provider-omniseed
-  google_provider: ../omniseed-provider-google
-  omnicede_provider: ../omnicede
-  ecosystem_company: ../omniseed-ecosystem-company
+  omniform: { repository: mikeajijola/omniform, ref: main, path: ./omniform, classification: product }
+  engine: { repository: mikeajijola/omniseed, ref: main, path: ./omniseed, classification: product }
+  os: { repository: mikeajijola/omniseedos, ref: main, path: ./omniseedos, classification: product }
+  github_provider: { repository: mikeajijola/omniseed-provider-github, ref: 73aa6a1d088a24230fba42dc894d723752b1736c, path: ../omniseed-provider-github, classification: provider }
+  vercel_provider: { repository: mikeajijola/omniseed-provider-vercel, ref: 6a65f743db11b72fb95c612766b69813ea33c0da, path: ../omniseed-provider-vercel, classification: provider }
+  neon_provider: { repository: mikeajijola/omniseed-provider-neon, ref: b8cc57f9411d0cd52732be267b75d4b1da1188f2, path: ../omniseed-provider-neon, classification: provider }
+  omniseed_provider: { repository: mikeajijola/omniseed-provider-omniseed, ref: bfa20da6f2e69e183c491b146897c0afd16344fa, path: ../omniseed-provider-omniseed, classification: provider }
+  google_provider: { repository: mikeajijola/omniseed-provider-google, ref: main, path: ../omniseed-provider-google, classification: provider }
+  omnicede_provider: { repository: mikeajijola/omnicede, ref: 20681f2c942c8a6d3bd23b693105992a08e69c3e, path: ../omnicede, classification: provider }
+  ecosystem_company: { repository: mikeajijola/omniseed-ecosystem-company, ref: main, path: ../omniseed-ecosystem-company, classification: company }
+publications:
+  omniform: { package: "@omniseed/omniform", version: 1.0.0-alpha.6 }
+  omniseed: { package: "@omniseed/engine", version: 1.0.0-alpha.20 }
+  omniseedos: { package: "@omniseed/os", version: 1.0.0-alpha.39 }
+support:
+  channel: generation-1-inference-alpha
+  status: supported
 governed_providers:
   - id: githubProvider
     provider_id: github
