@@ -72,7 +72,7 @@ export async function runConformance(options = {}) {
   const reportKind = options.reportKind ?? "mainline";
   const canonicalMainline = resolve(join(root, "reports/main/latest.json"));
   const certifiedReportPath = resolve(options.certifiedReport ?? canonicalMainline);
-  const certifiedSubjectState = reportKind === "mainline" ? await readCertifiedSubjectState(certifiedReportPath) : null;
+  const certifiedSubjectState = reportKind === "mainline" ? await readCertifiedSubjectState(certifiedReportPath, subjectState) : null;
   const report = {
     ecosystemVersion: String(catalogue.version),
     generatedAt: new Date().toISOString(),
@@ -110,9 +110,10 @@ export async function runConformance(options = {}) {
   return report;
 }
 
-async function readCertifiedSubjectState(path) {
+async function readCertifiedSubjectState(path, observedSubjectState) {
   try {
     const report = JSON.parse(await readFile(path, "utf8"));
+    if (!Object.hasOwn(report, "subjectState")) return migrateLegacyCertifiedSubjectState(report, observedSubjectState);
     await validateReport(report);
     if (report.reportKind !== "mainline" || report.freshness !== "current" || !report.governance.clean || Object.values(report.repositories).some(item => !item.clean)) return null;
     const { digest, beforeDigest, afterDigest, observationStable, ...identity } = report.subjectState;
@@ -122,6 +123,18 @@ async function readCertifiedSubjectState(path) {
   } catch {
     return null;
   }
+}
+
+export function migrateLegacyCertifiedSubjectState(report, observed) {
+  if (!observed?.complete || observed.observationStable === false || report?.reportKind !== "mainline" || report.freshness !== "current") return null;
+  if (report.governance?.repository !== "mikeajijola/omniseed-ecosystem" || !report.governance.clean || report.governance.invariantsDigest !== observed.invariantDigest) return null;
+  if (!/^[0-9a-f]{40}$/.test(report.governance.commit ?? "") || !report.repositories || typeof report.repositories !== "object") return null;
+  const observedRevisions = new Map(observed.subjects.map(subject => [subject.id, subject.revision]));
+  for (const id of ["omniform", "omniseed", "omniseedos"]) if (!report.repositories[id]) return null;
+  for (const [id, repository] of Object.entries(report.repositories)) {
+    if (!repository?.clean || !/^[0-9a-f]{40}$/.test(repository.commit ?? "") || observedRevisions.get(id) !== repository.commit) return null;
+  }
+  return observed;
 }
 
 async function createSubjectIdentity({ repositoryRecords, roots, governanceRecord, invariantDigest, governedProviders, repositoryMetadata, publications, support }) {

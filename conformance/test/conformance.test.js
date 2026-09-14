@@ -5,7 +5,7 @@ import { existsSync } from "node:fs";
 import { cp, mkdir, mkdtemp, readFile, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
-import { deriveFreshness, runConformance, subjectStateDigest } from "../src/index.js";
+import { deriveFreshness, migrateLegacyCertifiedSubjectState, runConformance, subjectStateDigest } from "../src/index.js";
 import Ajv2020 from "ajv/dist/2020.js";
 import { parse } from "yaml";
 
@@ -115,6 +115,27 @@ test("runConformance compares observed state with certified mainline evidence", 
   execFileSync("git", ["-C", engine, "-c", "user.name=Conformance Test", "-c", "user.email=test@example.invalid", "commit", "-qm", "drift"]);
   const drifted = await runConformance({ ...repositories, output: false, certifiedReport });
   assert.equal(drifted.freshness, "stale");
+});
+
+test("a clean legacy mainline report bootstraps the subject-state format once", () => {
+  const invariantDigest = `sha256:${"1".repeat(64)}`;
+  const revisions = { omniform: "a".repeat(40), omniseed: "b".repeat(40), omniseedos: "c".repeat(40) };
+  const observed = {
+    complete: true,
+    invariantDigest,
+    observationStable: true,
+    subjects: Object.entries(revisions).map(([id, revision]) => ({ id, revision }))
+  };
+  const legacy = {
+    reportKind: "mainline",
+    freshness: "current",
+    governance: { repository: "mikeajijola/omniseed-ecosystem", commit: "d".repeat(40), clean: true, invariantsDigest: invariantDigest },
+    repositories: Object.fromEntries(Object.entries(revisions).map(([id, commit]) => [id, { commit, clean: true }]))
+  };
+
+  assert.equal(migrateLegacyCertifiedSubjectState(legacy, observed), observed);
+  assert.equal(migrateLegacyCertifiedSubjectState({ ...legacy, repositories: { ...legacy.repositories, omniseed: { ...legacy.repositories.omniseed, clean: false } } }, observed), null);
+  assert.equal(migrateLegacyCertifiedSubjectState({ ...legacy, governance: { ...legacy.governance, invariantsDigest: `sha256:${"2".repeat(64)}` } }, observed), null);
 });
 
 test("invalid certified evidence fails closed", async () => {
