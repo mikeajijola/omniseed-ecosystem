@@ -12,9 +12,9 @@ const keys = value => value && typeof value === "object" ? Object.entries(value)
 test("coordinated Provider candidates satisfy the strict contract catalogue", () => {
   const validate = new Ajv2020({ allErrors: true }).compile(schema);
   assert.equal(validate(catalogue), true, JSON.stringify(validate.errors));
-  assert.equal(catalogue.candidates.length, 17);
-  assert.equal(new Set(catalogue.candidates.map(candidate => candidate.id)).size, 17);
-  assert.deepEqual(catalogue.candidates.map(candidate => candidate.issue).sort((a, b) => a - b), [34, 35, 36, 37, 38, 39, 40, 41, 42, 45, 46, 47, 48, 49, 50, 51, 52]);
+  assert.equal(catalogue.candidates.length, 18);
+  assert.equal(new Set(catalogue.candidates.map(candidate => candidate.id)).size, 18);
+  assert.deepEqual(catalogue.candidates.map(candidate => candidate.issue).sort((a, b) => a - b), [34, 35, 36, 37, 38, 39, 40, 41, 42, 45, 46, 47, 48, 49, 50, 51, 52, 55]);
 });
 
 test("candidate declarations preserve authority and evidence boundaries", () => {
@@ -53,6 +53,24 @@ test("second-wave candidates retain issue-authorized family boundaries", () => {
     styra: ["policies"],
     microsoft: ["agents"],
     workos: ["identity"],
-    cerbos: ["policies"]
+    cerbos: ["policies"],
+    servicenow: ["connectors"]
   });
+});
+
+test("ServiceNow remains a bounded connectors implementation candidate", () => {
+  const candidate = catalogue.candidates.find(candidate => candidate.id === "servicenow");
+  assert.equal(candidate.organisation, "ServiceNow");
+  assert.equal(candidate.disposition, "add_now");
+  assert.deepEqual(candidate.primitiveFamilies, ["connectors"]);
+  assert.deepEqual(candidate.operations, ["plan", "apply", "observe"]);
+  assert.ok(candidate.permissions.observe.includes("instance_evidence.read"));
+  assert.deepEqual(candidate.permissions.mutate, ["sandbox_allowlisted_field.manage"]);
+  assert.ok(candidate.evidence.includes("compliance_artifact_provenance"));
+  assert.ok(candidate.evidence.includes("read_after_write_result"));
+  assert.ok(candidate.failureCases.includes("insufficient_role_or_acl"));
+  assert.ok(candidate.failureCases.includes("company_capability_semantic_leakage"));
+  assert.ok(candidate.policyGuards.includes("observation_and_mutation_authority_separate"));
+  assert.ok(candidate.policyGuards.includes("provider_workflow_does_not_authorize_mutation"));
+  assert.ok(candidate.policyGuards.includes("workflows_not_advertised"));
 });
