@@ -1,0 +1,14 @@
+{
+  "manifestVersion": "1.0",
+  "id": "servicenow",
+  "organisation": "ServiceNow",
+  "version": "0.1.0",
+  "engineCompatibility": ">=0.1.0",
+  "primitiveFamilies": ["connectors"],
+  "implementations": [{ "family": "connectors", "products": ["Table REST API", "OAuth", "platform audit and instance evidence"] }],
+  "operations": ["plan", "apply", "observe"],
+  "configurationSchema": "./configuration.schema.json",
+  "observationTypes": ["connector_record"],
+  "evidenceTypes": ["servicenow_record_evidence"],
+  "permissions": ["allowlisted_table.read", "sandbox_allowlisted_field.manage"]
+}
