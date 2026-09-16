@@ -1,0 +1,12 @@
+{
+  "providerId": "servicenow",
+  "providerRevision": "0.1.0",
+  "provenance": {
+    "issue": "https://github.com/mikeajijola/omniseed-ecosystem/issues/55",
+    "authorizationCommentId": 5668044515,
+    "taskSnapshot": "8228eead06aabebce4ac686471bced0fe983a56828e46f2ea9d0e7dc26983f42"
+  },
+  "liveNonProductionEvidence": { "available": false, "reason": "No controller-supplied ServiceNow non-production instance or credentials were available; only deterministic fixtures were evaluated." },
+  "ecosystemConformance": "fixture_only",
+  "promotion": { "governedCurrent": false, "blockedUntil": ["live_non_production_evidence_available", "exact_provider_revision_conformance_passes"] }
+}
