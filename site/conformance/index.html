@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>OmniSeed Ecosystem Conformance</title>
     <style>
-      body { font: 16px/1.5 system-ui, sans-serif; max-width: 54rem; margin: 3rem auto; padding: 0 1rem; color: #17202a; }
+      body { font: 16px/1.5 system-ui, sans-serif; max-width: 54rem; margin: 3rem auto; padding: 0 1rem; color: #17202a; overflow-wrap: anywhere; }
       dl { display: grid; grid-template-columns: max-content 1fr; gap: .4rem 1rem; }
       dt { font-weight: 700; } code { overflow-wrap: anywhere; }
       li { margin: .5rem 0; } .failed { color: #a40000; } .warning { color: #7a4b00; }
@@ -30,6 +30,7 @@
         const heading = document.createElement("h2"); heading.textContent = "Latest result"; target.append(heading);
         const identity = document.createElement("p"); identity.textContent = `${report.reportKind} evidence — freshness: ${report.freshness} — state: ${report.subjectState.digest} — invariants: ${report.subjectState.invariantDigest}`; target.append(identity);
         const observation = document.createElement("p"); observation.textContent = `Before: ${report.subjectState.beforeDigest}; after: ${report.subjectState.afterDigest}; stable: ${report.subjectState.observationStable}`; target.append(observation);
+        const authority = document.createElement("p"); authority.textContent = `Canonical authority observation: ${report.authorityObservation?.status ?? "indeterminate"}`; target.append(authority);
         const summary = document.createElement("dl");
         for (const [label, value] of Object.entries(report.summary)) {
           const term = document.createElement("dt"); term.textContent = label;
@@ -38,7 +39,7 @@
         }
         target.append(summary);
         const time = document.createElement("p"); time.textContent = `Generated ${report.generatedAt}`; target.append(time);
-        const subjectsHeading = document.createElement("h2"); subjectsHeading.textContent = "Certified subjects"; target.append(subjectsHeading);
+        const subjectsHeading = document.createElement("h2"); subjectsHeading.textContent = "Evaluated subjects"; target.append(subjectsHeading);
         const subjects = document.createElement("ul");
         report.subjectState.subjects.forEach(item => { const entry = document.createElement("li"); entry.textContent = item.status ? `${item.id} (${item.providerId}) — ${item.status}: ${item.rationale}` : `${item.id} — ${item.revision}${item.expectedRevision ? ` (governed revision ${item.expectedRevision})` : ""}${item.packageVersion ? ` (package ${item.packageVersion})` : ""}`; subjects.append(entry); });
         target.append(subjects);

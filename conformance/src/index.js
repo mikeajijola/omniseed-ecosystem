@@ -7,6 +7,7 @@ import Ajv2020 from "ajv/dist/2020.js";
 import addFormats from "ajv-formats";
 import { parse } from "yaml";
 import { ruleTests } from "./rules/index.js";
+import { compareAuthorities, observeAuthorities } from "./authority.js";
 
 const root = resolve(new URL("../..", import.meta.url).pathname);
 
@@ -18,7 +19,7 @@ export async function runConformance(options = {}) {
     return [`provider_${name}`, resolve(path)];
   }));
   const governedProviders = repositoryConfiguration.governed_providers ?? [];
-  validateGovernedProviders(governedProviders, repositoryConfiguration.repositories ?? {});
+  validateGovernedProviders(governedProviders, repositoryConfiguration.repositories ?? {}, repositoryConfiguration.authorities ?? {});
   const governedIds = new Set(governedProviders.map(item => item.id));
   for (const id of Object.keys(suppliedProviders)) if (!governedIds.has(id)) throw new Error(`Provider ${id} is not in the authoritative governed Provider set`);
   const configuredProviders = Object.fromEntries(governedProviders.filter(item => item.status !== "excluded").flatMap(item => {
@@ -40,6 +41,7 @@ export async function runConformance(options = {}) {
   const runner = JSON.parse(await readFile(join(root, "package.json"), "utf8"));
   const compatibility = parse(await readFile(join(root, "compatibility/packages.yaml"), "utf8"));
   const before = await createSubjectIdentity({ repositoryRecords: recordsFor(roots), roots, governanceRecord: repositoryRecord(root, root), invariantDigest, governedProviders });
+  const remoteBefore = options.observeRemotes ? observeAuthorities(repositoryConfiguration.authorities) : null;
   const context = await buildContext(roots, compatibility);
   const findings = [];
 
@@ -66,6 +68,8 @@ export async function runConformance(options = {}) {
   const exactTree = governanceRecord.clean && Object.values(repositoryRecords).every(item => item.clean);
   const after = await createSubjectIdentity({ repositoryRecords, roots, governanceRecord, invariantDigest, governedProviders });
   const subjectState = createSubjectState(before, after);
+  const remoteAfter = options.observeRemotes ? observeAuthorities(repositoryConfiguration.authorities) : null;
+  const authorityStatus = compareAuthorities(subjectState.subjects, remoteBefore, remoteAfter);
   const reportKind = options.reportKind ?? "mainline";
   const canonicalMainline = resolve(join(root, "reports/main/latest.json"));
   const certifiedReportPath = resolve(options.certifiedReport ?? canonicalMainline);
@@ -75,6 +79,7 @@ export async function runConformance(options = {}) {
     generatedAt: new Date().toISOString(),
     reportKind,
     freshness: deriveFreshness(certifiedSubjectState, subjectState, reportKind, exactTree),
+    authorityObservation: { status: authorityStatus, before: remoteBefore, after: remoteAfter },
     subjectState,
     governance: {
       repository: "mikeajijola/omniseed-ecosystem",
@@ -93,6 +98,15 @@ export async function runConformance(options = {}) {
     },
     findings
   };
+  // A matching historical checkout is not proof of current canonical heads.
+  if (reportKind === "mainline" && authorityStatus !== "current") report.freshness = authorityStatus;
+  if (reportKind === "mainline" && (report.summary.failed || report.summary.warnings)) report.freshness = "indeterminate";
+  if (options.certifyCandidate) {
+    const candidate = JSON.parse(await readFile(resolve(options.certifyCandidate), "utf8"));
+    await validateReport(candidate);
+    if (!canCertifyCandidate(candidate, report)) throw new Error("Candidate certification requires matching clean canonical subjects and independently passing checks");
+    report.freshness = "current";
+  }
   await validateReport(report);
   if (options.requiredFreshness && report.freshness !== options.requiredFreshness) throw new Error(`Required derived freshness ${options.requiredFreshness}, observed ${report.freshness}`);
   if (options.output !== false) {
@@ -107,11 +121,28 @@ export async function runConformance(options = {}) {
   return report;
 }
 
+export function canCertifyCandidate(candidate, report) {
+  const passing = value => value.summary.failed === 0 && value.summary.warnings === 0 &&
+    value.summary.passed > 0 && value.findings.length > 0 &&
+    !value.findings.some(item => ["failed", "warning"].includes(item.status));
+  const exact = value => {
+    const { digest, beforeDigest, afterDigest, observationStable, ...identity } = value.subjectState;
+    return identity.complete && observationStable && beforeDigest === digest && afterDigest === digest &&
+      digest === subjectStateDigest(identity) && value.governance.clean &&
+      Object.values(value.repositories).every(item => item.clean);
+  };
+  return candidate.reportKind === "candidate" && report.reportKind === "mainline" &&
+    passing(candidate) && passing(report) && exact(candidate) && exact(report) &&
+    candidate.subjectState.digest === report.subjectState.digest &&
+    compareAuthorities(report.subjectState.subjects, report.authorityObservation?.before, report.authorityObservation?.after) === "current";
+}
+
 async function readCertifiedSubjectState(path) {
   try {
     const report = JSON.parse(await readFile(path, "utf8"));
     await validateReport(report);
-    if (report.reportKind !== "mainline" || report.freshness !== "current" || !report.governance.clean || Object.values(report.repositories).some(item => !item.clean)) return null;
+    if (report.reportKind !== "mainline" || report.freshness !== "current" || report.summary.failed || report.summary.warnings || report.findings.some(item => ["failed", "warning"].includes(item.status)) || !report.governance.clean || Object.values(report.repositories).some(item => !item.clean)) return null;
+    if (report.authorityObservation?.status !== "current" || compareAuthorities(report.subjectState.subjects, report.authorityObservation.before, report.authorityObservation.after) !== "current") return null;
     const { digest, beforeDigest, afterDigest, observationStable, ...identity } = report.subjectState;
     if (digest !== subjectStateDigest(identity)) return null;
     if (afterDigest !== digest || !observationStable) return null;
@@ -134,7 +165,7 @@ async function createSubjectIdentity({ repositoryRecords, roots, governanceRecor
       continue;
     }
     const record = repositoryRecords[provider.id];
-    const subject = { id: provider.id, kind: "provider", providerId: provider.provider_id, expectedRevision: provider.revision };
+    const subject = { id: provider.id, kind: "provider", providerId: provider.provider_id };
     if (!record) {
       complete = false;
       subject.status = "unavailable";
@@ -142,7 +173,6 @@ async function createSubjectIdentity({ repositoryRecords, roots, governanceRecor
     }
     else {
       subject.revision = record.commit;
-      if (record.commit !== provider.revision) complete = false;
       const manifestPath = join(roots[provider.id], "provider-package.json");
       try {
         const manifestSource = await readFile(manifestPath, "utf8");
@@ -157,7 +187,8 @@ async function createSubjectIdentity({ repositoryRecords, roots, governanceRecor
     subjects.push(subject);
   }
   subjects.sort((a, b) => a.id.localeCompare(b.id));
-  const governedProviderSet = subjects.filter(item => item.kind === "provider").map(item => ({ id: item.id, status: item.status === "excluded" ? "excluded" : "included", providerId: item.providerId ?? null, revision: item.expectedRevision ?? null, rationale: item.status === "excluded" ? item.rationale : null }));
+  if (!repositoryRecords.company) complete = false;
+  const governedProviderSet = subjects.filter(item => item.kind === "provider").map(item => ({ id: item.id, status: item.status === "excluded" ? "excluded" : "included", providerId: item.providerId ?? null, revision: item.revision ?? null, rationale: item.status === "excluded" ? item.rationale : null }));
   const identity = { complete, invariantDigest, subjects, governedProviderSet };
   return { ...identity, digest: subjectStateDigest(identity) };
 }
@@ -194,7 +225,7 @@ function recordsFor(roots) {
   return Object.fromEntries(Object.entries(roots).map(([name, path]) => [name, repositoryRecord(path, root)]));
 }
 
-function validateGovernedProviders(providers, repositories) {
+function validateGovernedProviders(providers, repositories, authorities) {
   const ids = new Set();
   for (const provider of providers) {
     if (!provider.id || ids.has(provider.id)) throw new Error(`Invalid or duplicate governed Provider id: ${provider.id}`);
@@ -202,7 +233,7 @@ function validateGovernedProviders(providers, repositories) {
     if (!provider.provider_id || !provider.repository || !repositories[provider.repository]) throw new Error(`Governed Provider ${provider.id} has no authoritative repository`);
     if (provider.status === "excluded") {
       if (!provider.rationale || provider.revision) throw new Error(`Excluded Provider ${provider.id} requires rationale and no revision`);
-    } else if (!/^[0-9a-f]{40}$/.test(provider.revision ?? "")) throw new Error(`Included Provider ${provider.id} requires an exact revision`);
+    } else if (!authorities[provider.id]?.url || !authorities[provider.id]?.ref) throw new Error(`Included Provider ${provider.id} requires an authoritative ref`);
   }
 }
 

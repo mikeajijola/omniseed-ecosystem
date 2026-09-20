@@ -19,7 +19,7 @@ const vercelProvider = resolve(process.env.OMNISEED_VERCEL_PROVIDER ?? join(prod
 
 test("current ecosystem emits a valid report with no deterministic failures", async () => {
   const report = await runConformance({ omniform: join(products, "omniform"), engine: join(products, "omniseed"), os: join(products, "omniseedos"), company: canonicalCompany, githubProvider, vercelProvider, output: false });
-  assert.equal(report.summary.failed, 0);
+  assert.equal(report.summary.failed, 0, JSON.stringify(report.findings.filter(item => item.status === "failed")));
   assert.ok(report.summary.passed >= 15);
   assert.ok(report.summary.notAutomated >= 1);
   assert.equal(report.findings.length, 45);
@@ -62,15 +62,17 @@ test("freshness is derived from exact subject state and fails closed", () => {
   assert.equal(deriveFreshness(state, { ...state, observationStable: false }), "indeterminate");
 });
 
-test("the authoritative Provider set pins every inclusion and explicitly excludes Google", async () => {
+test("the authoritative Provider set includes Google and declares every canonical ref", async () => {
   const configuration = parse(await readFile(join(workspace, "conformance/repositories.yaml"), "utf8"));
   const providers = configuration.governed_providers;
   assert.deepEqual(providers.map(item => item.id), ["githubProvider", "vercelProvider", "provider_neon", "provider_omniseed", "provider_omnicede", "provider_google"]);
-  for (const provider of providers.filter(item => item.status !== "excluded")) assert.match(provider.revision, /^[0-9a-f]{40}$/);
+  for (const provider of providers.filter(item => item.status !== "excluded")) {
+    assert.match(configuration.authorities[provider.id].ref, /^refs\/heads\//);
+    assert.match(configuration.authorities[provider.id].url, /^https:\/\/github.com\/mikeajijola\//);
+  }
   const google = providers.find(item => item.provider_id === "google");
-  assert.equal(google.status, "excluded");
-  assert.ok(google.rationale);
-  assert.equal(google.revision, undefined);
+  assert.notEqual(google.status, "excluded");
+  assert.equal(configuration.authorities.provider_omnicede.ref, "refs/heads/master");
 });
 
 test("an undeclared Provider cannot silently expand the governed set", async () => {
@@ -90,7 +92,7 @@ test("a required freshness gate fails before replacing its certification source"
   assert.equal(await readFile(output, "utf8"), "preserved certification\n");
 });
 
-test("runConformance compares observed state with certified mainline evidence", async () => {
+test("local checkouts and a caller-edited baseline cannot assert canonical freshness", async () => {
   const fixture = await mkdtemp(join(tmpdir(), "omniseed-certified-report-"));
   const certifiedReport = join(fixture, "latest.json");
   const repositories = await conformanceRepositories(fixture);
@@ -99,14 +101,14 @@ test("runConformance compares observed state with certified mainline evidence", 
   await writeFile(certifiedReport, JSON.stringify({ ...baseline, freshness: "current" }));
 
   const matching = await runConformance({ ...repositories, output: false, certifiedReport });
-  assert.equal(matching.freshness, "current");
+  assert.equal(matching.freshness, "indeterminate");
 
   const engine = repositories.engine;
   await writeFile(join(engine, "freshness-drift.txt"), "changed certified subject\n");
   execFileSync("git", ["-C", engine, "add", "."]);
   execFileSync("git", ["-C", engine, "-c", "user.name=Conformance Test", "-c", "user.email=test@example.invalid", "commit", "-qm", "drift"]);
   const drifted = await runConformance({ ...repositories, output: false, certifiedReport });
-  assert.equal(drifted.freshness, "stale");
+  assert.equal(drifted.freshness, "indeterminate");
 });
 
 test("invalid certified evidence fails closed", async () => {
