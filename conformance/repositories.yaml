@@ -7,5 +7,59 @@ repositories:
   vercel_provider: ../omniseed-provider-vercel
   neon_provider: ../omniseed-provider-neon
   omniseed_provider: ../omniseed-provider-omniseed
+  google_provider: ../omniseed-provider-google
   omnicede_provider: ../omnicede
   ecosystem_company: ../omniseed-ecosystem-company
+governed_providers:
+  - id: githubProvider
+    provider_id: github
+    repository: github_provider
+  - id: vercelProvider
+    provider_id: vercel
+    repository: vercel_provider
+  - id: provider_neon
+    provider_id: neon
+    repository: neon_provider
+  - id: provider_omniseed
+    provider_id: omniseed
+    repository: omniseed_provider
+  - id: provider_omnicede
+    provider_id: omnicede
+    repository: omnicede_provider
+  - id: provider_google
+    provider_id: google
+    repository: google_provider
+authorities:
+  githubProvider:
+    url: https://github.com/mikeajijola/omniseed-provider-github.git
+    ref: refs/heads/main
+  vercelProvider:
+    url: https://github.com/mikeajijola/omniseed-provider-vercel.git
+    ref: refs/heads/main
+  provider_neon:
+    url: https://github.com/mikeajijola/omniseed-provider-neon.git
+    ref: refs/heads/main
+  provider_omniseed:
+    url: https://github.com/mikeajijola/omniseed-provider-omniseed.git
+    ref: refs/heads/main
+  provider_omnicede:
+    url: https://github.com/mikeajijola/omnicede.git
+    ref: refs/heads/master
+  provider_google:
+    url: https://github.com/mikeajijola/omniseed-provider-google.git
+    ref: refs/heads/main
+  omniform:
+    url: https://github.com/mikeajijola/omniform.git
+    ref: refs/heads/main
+  omniseed:
+    url: https://github.com/mikeajijola/omniseed.git
+    ref: refs/heads/main
+  omniseedos:
+    url: https://github.com/mikeajijola/omniseedos.git
+    ref: refs/heads/main
+  company:
+    url: https://github.com/mikeajijola/omniseed-ecosystem-company.git
+    ref: refs/heads/main
+  governance:
+    url: https://github.com/mikeajijola/omniseed-ecosystem.git
+    ref: refs/heads/main

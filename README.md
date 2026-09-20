@@ -19,7 +19,7 @@ The rulebook covers both governed loops: realisation plans change reality to mat
 - `compatibility/` records compatible package lines.
 - `providers/` defines provider-package and provider-registry data contracts, plus the non-runtime candidate contract catalogue.
 - `capabilities/` contains the governance-owned company capability reference catalogue. It is discovery/provenance material, not canonical company desired state.
-- `reports/latest.json` is the latest local conformance evidence.
+- `reports/main/latest.json` is the canonical mainline conformance evidence; candidate evidence must use a separate path.
 - `docs/` explains how to change the architecture safely.
 
 ## Run it
@@ -41,7 +41,11 @@ npx omniseed-conformance \
   --os ../omniseedos
 ```
 
-The command writes `reports/latest.json`. A failed deterministic invariant exits with a non-zero status. Warnings remain visible without pretending that a judgment is a machine-proven failure.
+The command writes the mainline report under `reports/main/latest.json`. Provider membership and canonical authority refs are declared in `conformance/repositories.yaml`, including Google and Omnicede's `master` branch. CI checks out exact resolved revisions from that catalogue. `--observe-remotes` independently observes every canonical ref before and after the checks; historical local checkouts cannot establish canonical freshness. Failed resolution is `indeterminate`, and an observed head advance is `stale`.
+
+`--certified-report path` reads the previous published certification from a separate location. A baseline with failed checks, warnings, missing authority evidence, or inconsistent subject identity cannot certify a new result. Matching local evidence without canonical remote observation is always `indeterminate`. The compatibility flag `--freshness current` remains a gate, never an assertion. A successful test run alone does not create a new certification. After the canonical workflow passes its tests and candidate evaluation, `--certify-candidate path` reruns all checks and observes canonical heads again. Only a clean, complete, unchanged exact candidate with independently passing checks may become current; failure leaves the earlier observation visible. Pull requests cannot take this publication path.
+
+CI publishes failed/indeterminate mainline evidence as well as successful evidence, preserving the failing check's exit status and showing the same verdict in JSON, HTML, and logs. PR reports remain candidates and cannot publish Pages. Hourly canonical observations bound detection delay for changes in other repositories; reports are timestamped observations, not a guarantee that upstream heads have not changed since then. Package compatibility remains independently enforced: do not relabel the supported channel merely to make source conformance green.
 
 The latest CI-generated report is published for machines at <https://mikeajijola.github.io/omniseed-ecosystem/conformance/latest.json> and for people at <https://mikeajijola.github.io/omniseed-ecosystem/conformance/>.
 
