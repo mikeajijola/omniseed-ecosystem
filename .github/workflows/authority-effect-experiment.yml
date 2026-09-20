@@ -1,0 +1,24 @@
+name: Authority and effect experiment
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  experiment:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npm run experiment:authority-effect
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: authority-effect-experiment
+          path: reports/authority-effect/

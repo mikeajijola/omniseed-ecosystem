@@ -19,7 +19,8 @@
     "check": "npm test && npm run catalogue:check && npm run conformance -- --fail-on warning",
     "catalogue:check": "node capabilities/generate.mjs --check",
     "catalogue:generate": "node capabilities/generate.mjs",
-    "providers:coverage": "node providers/generate-coverage.mjs"
+    "providers:coverage": "node providers/generate-coverage.mjs",
+    "experiment:authority-effect": "node --test conformance/test/authority-effect.test.js && node conformance/experiments/authority-effect/report.js"
   },
   "dependencies": {
     "ajv": "^8.17.1",
@@ -38,5 +39,8 @@
     "docs",
     "README.md",
     "AGENTS.md"
-  ]
+  ],
+  "devDependencies": {
+    "@omniseed/engine": "1.0.0-alpha.21"
+  }
 }
