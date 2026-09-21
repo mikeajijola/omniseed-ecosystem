@@ -1,0 +1,6 @@
+{
+  "providerId": "snowflake", "providerRevision": "0.1.0",
+  "provenance": { "issue": "https://github.com/mikeajijola/omniseed-ecosystem/issues/56" },
+  "liveNonProductionEvidence": { "available": false, "reason": "No controller-supplied Snowflake non-production account or workload identity was available; deterministic fixtures only." },
+  "ecosystemConformance": "fixture_only", "promotion": { "governedCurrent": false, "blockedUntil": ["live_non_production_evidence_available", "exact_provider_revision_conformance_passes"] }
+}

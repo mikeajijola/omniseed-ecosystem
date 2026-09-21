@@ -1,0 +1,8 @@
+{
+  "manifestVersion": "1.0", "id": "snowflake", "organisation": "Snowflake", "version": "0.1.0",
+  "engineCompatibility": ">=0.1.0", "primitiveFamilies": ["memory"],
+  "implementations": [{ "family": "memory", "products": ["Snowflake Data Cloud", "SQL and REST APIs", "Access History"] }],
+  "operations": ["plan", "apply", "observe", "invoke"], "configurationSchema": "./configuration.schema.json",
+  "observationTypes": ["memory_object", "query_result"], "evidenceTypes": ["snowflake_memory_evidence"],
+  "permissions": ["object.read", "query.invoke", "sandbox_object.manage"]
+}
