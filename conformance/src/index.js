@@ -11,6 +11,7 @@ import { compareAuthorities, observeAuthorities } from "./authority.js";
 import { evaluateRuntimeCompatibility } from "./runtime.js";
 
 const root = resolve(new URL("../..", import.meta.url).pathname);
+export const CERTIFICATION_VALIDITY_SECONDS = 75 * 60;
 
 export async function runConformance(options = {}) {
   if (Object.hasOwn(options, "freshness")) throw new Error("Freshness is derived from observed subject state and cannot be supplied");
@@ -85,11 +86,13 @@ export async function runConformance(options = {}) {
   const canonicalMainline = resolve(join(root, "reports/main/latest.json"));
   const certifiedReportPath = resolve(options.certifiedReport ?? canonicalMainline);
   const certifiedSubjectState = reportKind === "mainline" ? await readCertifiedSubjectState(certifiedReportPath) : null;
+  const generatedAt = new Date().toISOString();
   const report = {
     ecosystemVersion: String(catalogue.version),
-    generatedAt: new Date().toISOString(),
+    generatedAt,
     reportKind,
     freshness: deriveFreshness(certifiedSubjectState, subjectState, reportKind, exactTree),
+    freshnessValidity: freshnessValidity(reportKind, generatedAt),
     authorityObservation: { status: authorityStatus, before: remoteBefore, after: remoteAfter },
     subjectState,
     governance: {
@@ -213,6 +216,23 @@ export function deriveFreshness(certified, observed, reportKind = "mainline", ex
   if (reportKind === "candidate") return "candidate";
   if (!certified || !observed || !exactTree || !certified.complete || !observed.complete || observed.observationStable === false || !certified.digest || !observed.digest) return "indeterminate";
   return certified.digest === observed.digest ? "current" : "stale";
+}
+
+export function effectiveFreshness(report, now = new Date()) {
+  if (report?.freshness !== "current") return report?.freshness ?? "indeterminate";
+  const deadline = Date.parse(report.freshnessValidity?.validUntil ?? "");
+  const observed = now instanceof Date ? now.getTime() : Date.parse(now);
+  return Number.isFinite(deadline) && Number.isFinite(observed) && observed <= deadline ? "current" : "indeterminate";
+}
+
+function freshnessValidity(reportKind, observedAt) {
+  return {
+    observedAt,
+    validUntil: reportKind === "mainline" ? new Date(Date.parse(observedAt) + CERTIFICATION_VALIDITY_SECONDS * 1000).toISOString() : null,
+    maximumAgeSeconds: CERTIFICATION_VALIDITY_SECONDS,
+    expiryFreshness: "indeterminate",
+    semantics: "Freshness is an exact remote observation with bounded validity, not an indefinite live claim. Consumers must use expiryFreshness after validUntil until a newer observation is published."
+  };
 }
 
 export function subjectStateDigest(value) {

@@ -28,7 +28,9 @@
         const visible = report.findings.filter(item => item.status !== "passed");
         target.replaceChildren();
         const heading = document.createElement("h2"); heading.textContent = "Latest result"; target.append(heading);
-        const identity = document.createElement("p"); identity.textContent = `${report.reportKind} evidence — freshness: ${report.freshness} — state: ${report.subjectState.digest} — invariants: ${report.subjectState.invariantDigest}`; target.append(identity);
+        const validUntil = Date.parse(report.freshnessValidity?.validUntil ?? "");
+        const effectiveFreshness = report.freshness === "current" && Number.isFinite(validUntil) && Date.now() > validUntil ? report.freshnessValidity.expiryFreshness : report.freshness;
+        const identity = document.createElement("p"); identity.textContent = `${report.reportKind} evidence — certified snapshot: ${report.freshness} — effective freshness: ${effectiveFreshness} — state: ${report.subjectState.digest} — invariants: ${report.subjectState.invariantDigest}`; target.append(identity);
         const observation = document.createElement("p"); observation.textContent = `Before: ${report.subjectState.beforeDigest}; after: ${report.subjectState.afterDigest}; stable: ${report.subjectState.observationStable}`; target.append(observation);
         const authority = document.createElement("p"); authority.textContent = `Canonical authority observation: ${report.authorityObservation?.status ?? "indeterminate"}`; target.append(authority);
         const summary = document.createElement("dl");
@@ -38,7 +40,7 @@
           summary.append(term, detail);
         }
         target.append(summary);
-        const time = document.createElement("p"); time.textContent = `Generated ${report.generatedAt}`; target.append(time);
+        const time = document.createElement("p"); time.textContent = `Observed ${report.freshnessValidity.observedAt}; live freshness valid until ${report.freshnessValidity.validUntil ?? "not applicable"}. After that deadline it is ${report.freshnessValidity.expiryFreshness} until re-observed.`; target.append(time);
         const subjectsHeading = document.createElement("h2"); subjectsHeading.textContent = "Evaluated subjects"; target.append(subjectsHeading);
         const subjects = document.createElement("ul");
         report.subjectState.subjects.forEach(item => { const entry = document.createElement("li"); entry.textContent = item.status ? `${item.id} (${item.providerId}) — ${item.status}: ${item.rationale}` : `${item.id} — ${item.revision}${item.expectedRevision ? ` (governed revision ${item.expectedRevision})` : ""}${item.packageVersion ? ` (package ${item.packageVersion})` : ""}`; subjects.append(entry); });

@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { runConformance } from "./index.js";
+import { effectiveFreshness, runConformance } from "./index.js";
 
 const args = process.argv.slice(2);
 const options = { providers: {} };
@@ -26,6 +26,8 @@ try {
     ...report.summary,
     reportKind: report.reportKind,
     freshness: report.freshness,
+    effectiveFreshness: effectiveFreshness(report),
+    freshnessValidity: report.freshnessValidity,
     invariantDigest: report.subjectState.invariantDigest,
     subjectStateDigest: report.subjectState.digest,
     beforeSubjectStateDigest: report.subjectState.beforeDigest,
