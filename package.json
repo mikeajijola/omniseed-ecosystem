@@ -42,6 +42,6 @@
     "AGENTS.md"
   ],
   "devDependencies": {
-    "@omniseed/engine": "1.0.0-alpha.21"
+    "@omniseed/engine": "^1.0.0-alpha.22"
   }
 }
