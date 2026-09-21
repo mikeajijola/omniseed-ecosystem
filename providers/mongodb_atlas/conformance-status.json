@@ -1,0 +1,1 @@
+{"providerId":"mongodb_atlas","providerRevision":"0.1.0","fixtureEvidence":{"available":true,"result":"pass"},"liveNonProductionEvidence":{"available":false,"reason":"No non-production Atlas project or scoped service identity was supplied."},"promotion":{"governedCurrent":false,"blockers":["live record lifecycle, audit, KMS and backup evidence required"]}}
