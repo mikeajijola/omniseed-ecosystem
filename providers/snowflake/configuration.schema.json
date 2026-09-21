@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema", "$id": "https://omniseed.org/schemas/providers/snowflake/configuration-v1.json",
+  "type": "object", "additionalProperties": false,
+  "required": ["account", "cloud", "region", "edition", "environment", "authority", "objects", "complianceArtifacts", "creditLimit"],
+  "properties": {
+    "account": { "type": "string", "minLength": 1 }, "cloud": { "enum": ["aws", "azure", "gcp"] }, "region": { "type": "string", "minLength": 2 },
+    "edition": { "type": "string", "minLength": 1 }, "environment": { "enum": ["sandbox", "non_production"] }, "creditLimit": { "type": "number", "exclusiveMinimum": 0 },
+    "authority": { "type": "object", "additionalProperties": false, "required": ["identityDigest", "role", "observe", "query", "mutate"], "properties": {
+      "identityDigest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" }, "role": { "type": "string", "minLength": 1 },
+      "observe": { "type": "boolean" }, "query": { "type": "boolean" }, "mutate": { "type": "boolean" }
+    }},
+    "objects": { "type": "array", "minItems": 1, "items": { "type": "object", "additionalProperties": false, "required": ["database", "schema", "name", "type"], "properties": {
+      "database": { "type": "string", "minLength": 1 }, "schema": { "type": "string", "minLength": 1 }, "name": { "type": "string", "minLength": 1 }, "type": { "enum": ["table", "view", "iceberg_table"] }
+    }}},
+    "complianceArtifacts": { "type": "array", "minItems": 1, "items": { "type": "object", "additionalProperties": false, "required": ["name", "cloud", "region", "edition", "reportDate", "source"], "properties": {
+      "name": { "type": "string", "minLength": 1 }, "cloud": { "type": "string" }, "region": { "type": "string" }, "edition": { "type": "string" },
+      "reportDate": { "type": "string", "format": "date" }, "source": { "type": "string", "format": "uri" }
+    }} }
+  }
+}
