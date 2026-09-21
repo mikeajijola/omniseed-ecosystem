@@ -1,0 +1,1 @@
+{"providerId":"pagerduty","providerRevision":"0.1.0","fixtureEvidence":{"available":true,"result":"pass"},"liveNonProductionEvidence":{"available":false,"reason":"No PagerDuty test account or scoped credentials were supplied."},"promotion":{"governedCurrent":false,"blockers":["live schedule, incident, notification and Audit Trail evidence required"]}}
