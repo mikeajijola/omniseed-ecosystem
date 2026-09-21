@@ -1,0 +1,10 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema","$id":"https://omniseed.org/schemas/providers/confluent/configuration-v1.json","type":"object","additionalProperties":false,
+  "required":["environment","cloud","region","clusterId","tier","authority","topics","complianceArtifacts","maxLag","costLimit"],
+  "properties":{
+    "environment":{"enum":["sandbox","non_production"]},"cloud":{"enum":["aws","azure","gcp","aws_govcloud"]},"region":{"type":"string","minLength":2},"clusterId":{"type":"string","minLength":1},"tier":{"enum":["standard","enterprise","freight","dedicated","government"]},"maxLag":{"type":"integer","minimum":0},"costLimit":{"type":"number","exclusiveMinimum":0},
+    "authority":{"type":"object","additionalProperties":false,"required":["producerDigest","consumerDigest","adminDigest","produce","consume","mutate"],"properties":{"producerDigest":{"type":"string","pattern":"^sha256:[a-f0-9]{64}$"},"consumerDigest":{"type":"string","pattern":"^sha256:[a-f0-9]{64}$"},"adminDigest":{"type":"string","pattern":"^sha256:[a-f0-9]{64}$"},"produce":{"type":"boolean"},"consume":{"type":"boolean"},"mutate":{"type":"boolean"}}},
+    "topics":{"type":"array","minItems":1,"items":{"type":"object","additionalProperties":false,"required":["id","schemaId","schemaVersion","connectorId"],"properties":{"id":{"type":"string","minLength":1},"schemaId":{"type":"string","minLength":1},"schemaVersion":{"type":"integer","minimum":1},"connectorId":{"type":"string","minLength":1}}}},
+    "complianceArtifacts":{"type":"array","minItems":1,"items":{"type":"object","additionalProperties":false,"required":["name","tier","cloud","region","reportDate","source"],"properties":{"name":{"type":"string"},"tier":{"type":"string"},"cloud":{"type":"string"},"region":{"type":"string"},"reportDate":{"type":"string","format":"date"},"source":{"type":"string","format":"uri"}}}}
+  }
+}
