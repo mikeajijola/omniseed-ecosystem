@@ -12,9 +12,9 @@ const keys = value => value && typeof value === "object" ? Object.entries(value)
 test("coordinated Provider candidates satisfy the strict contract catalogue", () => {
   const validate = new Ajv2020({ allErrors: true }).compile(schema);
   assert.equal(validate(catalogue), true, JSON.stringify(validate.errors));
-  assert.equal(catalogue.candidates.length, 23);
-  assert.equal(new Set(catalogue.candidates.map(candidate => candidate.id)).size, 23);
-  assert.deepEqual(catalogue.candidates.map(candidate => candidate.issue).sort((a, b) => a - b), [34, 35, 36, 37, 38, 39, 40, 41, 42, 45, 46, 47, 48, 49, 50, 51, 52, 55, 56, 57, 58, 59, 60]);
+  assert.equal(catalogue.candidates.length, 24);
+  assert.equal(new Set(catalogue.candidates.map(candidate => candidate.id)).size, 24);
+  assert.deepEqual(catalogue.candidates.map(candidate => candidate.issue).sort((a, b) => a - b), [34, 35, 36, 37, 38, 39, 40, 41, 42, 45, 46, 47, 48, 49, 50, 51, 52, 55, 56, 57, 58, 59, 60, 61]);
 });
 
 test("candidate declarations preserve authority and evidence boundaries", () => {
@@ -40,7 +40,7 @@ test("portable families have reciprocal candidate peers", () => {
 test("prototype disposition cannot imply governed or live status", () => {
   assert.match(catalogue.statusSemantics.prototype, /not governed\/current/i);
   assert.match(catalogue.statusSemantics.add_now, /not installed.*live-accepted/i);
-  assert.deepEqual(catalogue.candidates.filter(candidate => candidate.disposition === "prototype").map(candidate => candidate.id).sort(), ["cerbos", "clerk", "inngest", "microsoft", "pagerduty", "styra", "temporal", "workos"]);
+  assert.deepEqual(catalogue.candidates.filter(candidate => candidate.disposition === "prototype").map(candidate => candidate.id).sort(), ["cerbos", "clerk", "inngest", "microsoft", "pagerduty", "splunk_cloud", "styra", "temporal", "workos"]);
 });
 
 test("second-wave candidates retain issue-authorized family boundaries", () => {
