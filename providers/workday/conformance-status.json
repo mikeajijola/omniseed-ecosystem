@@ -1,0 +1,1 @@
+{"providerId":"workday","providerRevision":"0.1.0","fixtureEvidence":{"available":true,"result":"pass"},"liveNonProductionEvidence":{"available":false,"reason":"No Workday sandbox tenant or scoped integration identity was supplied."},"promotion":{"governedCurrent":false,"blockers":["live privacy-minimized record, pending/final mutation and audit evidence required"]}}
