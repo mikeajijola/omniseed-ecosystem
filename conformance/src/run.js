@@ -32,6 +32,7 @@ try {
     afterSubjectStateDigest: report.subjectState.afterDigest,
     observationStable: report.subjectState.observationStable,
     authorityObservation: report.authorityObservation,
+    runtimeCompatibility: report.runtimeCompatibility,
     governedProviders: report.subjectState.governedProviderSet
   }));
   report.findings.filter(item => item.status !== "passed").forEach(item => {

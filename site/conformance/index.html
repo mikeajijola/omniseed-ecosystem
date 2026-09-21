@@ -43,6 +43,16 @@
         const subjects = document.createElement("ul");
         report.subjectState.subjects.forEach(item => { const entry = document.createElement("li"); entry.textContent = item.status ? `${item.id} (${item.providerId}) — ${item.status}: ${item.rationale}` : `${item.id} — ${item.revision}${item.expectedRevision ? ` (governed revision ${item.expectedRevision})` : ""}${item.packageVersion ? ` (package ${item.packageVersion})` : ""}`; subjects.append(entry); });
         target.append(subjects);
+        const runtimeHeading = document.createElement("h2"); runtimeHeading.textContent = "Runtime compatibility"; target.append(runtimeHeading);
+        const runtime = report.runtimeCompatibility;
+        const runtimeSummary = document.createElement("p");
+        runtimeSummary.className = runtime.status === "failed" ? "failed" : "";
+        runtimeSummary.textContent = `${runtime.status.toUpperCase()} — runner Node ${runtime.runner.version}; effective range ${runtime.effectiveRange ?? "indeterminate"}; OS source ${runtime.root.revision}`;
+        target.append(runtimeSummary);
+        const runtimePackages = document.createElement("ul");
+        runtime.packages.forEach(item => { const entry = document.createElement("li"); entry.textContent = `${item.name}@${item.version} — Node ${item.range ?? "not declared"} (${item.path})`; runtimePackages.append(entry); });
+        runtime.errors.forEach(message => { const entry = document.createElement("li"); entry.className = "failed"; entry.textContent = message; runtimePackages.append(entry); });
+        target.append(runtimePackages);
         const subheading = document.createElement("h2"); subheading.textContent = "Open review items"; target.append(subheading);
         const list = document.createElement("ul");
         visible.forEach(item => {
