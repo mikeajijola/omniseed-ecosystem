@@ -2,7 +2,7 @@
 
 Conformance-only evidence for [#62](https://github.com/mikeajijola/omniseed-ecosystem/issues/62) and [#65](https://github.com/mikeajijola/omniseed-ecosystem/issues/65). No production credentials, physical actuation, canonical schema changes or runtime dependency on this repository. Deterministic keys are **public test keys**.
 
-Run `npm ci`, `npm run experiment:authority-effect`, and open `reports/authority-effect/index.html`. The same scenario records produce machine JSON, human HTML (with a simulated actuator/sensor graphic), and CI JSONL traces. Unit tests run under ordinary `npm test`. Assertions use permanent experimental IDs `EXP-AUTH-001` through `005` and `EXP-EFFECT-001` through `005`; they do not certify production Providers.
+Run `npm ci`, `npm run experiment:authority-effect`, and open `reports/authority-effect/index.html`. The same scenario records produce machine JSON, human HTML (with a simulated actuator/sensor graphic), and CI JSONL traces. Unit tests run under ordinary `npm test`. Assertions use permanent experimental IDs `EXP-AUTH-001` through `006` and `EXP-EFFECT-001` through `006`; they do not certify production Providers.
 
 ## Mapping and findings
 
@@ -27,8 +27,12 @@ The selected wire subset uses canonical JSON, Ed25519 signatures, JWT issuer/sub
 
 The isolated software resource uses a version precondition and operation-ID receipt. Verification and mutation are synchronous, without a yield, in one simulated process. The simulated actuator uses the same contract with position limited to ±5 units, sensor tolerance 0.1 and freshness 5 seconds. It is not a robot safety controller. The boundary consumes the presented operation independently of the approved snapshot; target, provider, arguments or version substitution cannot reuse that approval. Readback is from resulting simulation state; fault injection can withhold or contradict it.
 
-Replays never cause a second effect, including after unobserved/partial results. Stored receipts are copied before returning so a caller cannot rewrite history. Changed authority is checked even on replay. Non-convergence requires re-observation before considering a retry; this fixture does not claim compensation or recovery has occurred.
+Replays never cause a second effect, including after unobserved/partial results. Stored receipts are copied before returning so a caller cannot rewrite history. Changed authority is checked even on replay. Fault hooks change the independently presented operation or resource version after verification and before commit; the boundary rechecks both and records no effect. Non-convergence requires re-observation before considering a retry; this fixture does not claim compensation or recovery has occurred.
 
-## Remaining acceptance evidence
+## Experiment conclusion and limits
 
-This is a bounded first experiment, not closure of either issue. A non-production external Provider conditional-write/readback trial, audit of each reference Provider's actual preconditions, full central stewardship comparison, explicit protected-category/narrowing and TOCTOU fault-injection cases, and an independent semantic review remain. Human/hybrid scenarios model actor identities; they do not prove a human approval UI. Draft terminology has not been introduced into Company capabilities. No conclusion here certifies portable production authority or physical safety.
+The bounded conformance experiment is complete for the two standards findings. It includes the real Engine permission gate and stewardship evaluator, protected-category and exact-head decisions, monotonic delegation and draft-wire mapping, holder binding, revocation/currentness, software and embodied simulations, operation/resource TOCTOU injection, replay, partial/unobserved effects, multimodal reports, and the [reference Provider precondition audit](./provider-preconditions.md).
+
+The evidence supports keeping the existing canonical separation of authority, operation, effect, observation and capability evaluation. It also identifies one portable input/evidence gap: the immediate Engine permission gate cannot itself consume multi-hop lineage, so independent lineage verification remains necessary in this experiment. That finding warrants a separate production contract proposal and review; it does not justify silently adding draft vocabulary or claiming a production vulnerability.
+
+No live external Provider, human approval UI, physical actuator, general JWT interoperability, complete DPoP, or certified safety controller was evaluated. Production conformance remains `NOT_EVALUATED`; the issues close the requested compatibility experiments, not those future implementation decisions.

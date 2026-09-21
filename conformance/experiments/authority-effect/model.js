@@ -135,7 +135,7 @@ export class SimulatedBoundary {
     this.receipts = new Map();
     this.effects = 0;
   }
-  execute({ approved, pending = approved, tokens, policy, observable = true, partial = false, readback = null }) {
+  execute({ approved, pending = approved, tokens, policy, observable = true, partial = false, readback = null, beforeCommit = null }) {
     const identity = digest(approved), pendingIdentity = digest(pending);
     const authority = verifyLineage(tokens, pending, policy);
     const base = { operationDigest: identity, pendingDigest: pendingIdentity, authority, target: pending.target, provider: pending.provider, actor: pending.actor, embodied: this.embodied };
@@ -151,6 +151,10 @@ export class SimulatedBoundary {
     if (this.embodied && (![this.state.sensorValue, this.state.sensorAt, this.state.value].every(Number.isFinite))) return result("INDETERMINATE", "sensor_missing");
     if (this.embodied && (Math.abs(this.state.sensorValue - this.state.value) > 0.1 || Math.abs(pending.value) > 5)) return result("FAIL", "unsafe_simulated_state");
     if (this.embodied && (policy.now - this.state.sensorAt > 5 || this.state.sensorAt > policy.now)) return result("INDETERMINATE", "sensor_stale");
+    const verified = { operationDigest: pendingIdentity, version: this.state.version, sensorValue: this.state.sensorValue, sensorAt: this.state.sensorAt };
+    beforeCommit?.({ pending, state: this.state });
+    if (digest(pending) !== verified.operationDigest || this.state.version !== verified.version ||
+        (this.embodied && (this.state.sensorValue !== verified.sensorValue || this.state.sensorAt !== verified.sensorAt))) return result("FAIL", "boundary_state_changed_before_commit");
     // Synchronous compare-and-commit in an isolated in-memory simulation only.
     this.state.value = partial ? pending.value / 2 : pending.value;
     this.state.version++;

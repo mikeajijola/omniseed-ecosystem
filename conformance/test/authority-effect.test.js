@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { canonical, digest, makeChain, encodeChain, decodeChain, fixtureOperation, policyFor, verifyLineage, centralPermissionDecision, SimulatedBoundary } from '../experiments/authority-effect/model.js';
+import { evaluateStewardshipProposal } from '@omniseed/engine';
 
 test('EXP-AUTH-001: canonical identities preserve lexicographic keys and reject ambiguous values', () => {
   assert.equal(canonical({ 2: 'two', 10: 'ten' }), '{"10":"ten","2":"two"}');
@@ -54,6 +55,15 @@ test('EXP-AUTH-004: rejects splicing, tampering, missing lineage and wrong holde
   assert.equal(centralPermissionDecision([{ permissions: [] }], operation), 'DENY');
 });
 
+test('EXP-AUTH-006: real Engine stewardship keeps protected categories and exact-head approval independent from delegation', () => {
+  const profile = { state:'enabled', activeFrom:null, expiresAt:'2099-01-01T00:00:00.000Z', limits:{concurrency:2,dailyChanges:4,actions:8,repairRounds:2}, usage:{active:0,dailyChanges:0,actions:0,repairRounds:0}, protectedCategories:['authority'] };
+  const proposal = { id:'proposal-1', digest:'a'.repeat(64), headSha:'b'.repeat(40), proposerActorId:'executor', categories:[], actionCount:1 };
+  const approval = { proposalId:proposal.id, proposalDigest:proposal.digest, headSha:proposal.headSha, actorId:'reviewer' };
+  assert.equal(evaluateStewardshipProposal(profile, proposal, { actorId:'executor', approval, checks:[{status:'successful'}], now:new Date('2026-09-21') }).allowed, true);
+  assert.equal(evaluateStewardshipProposal(profile, {...proposal,categories:['authority']}, { actorId:'executor', approval, checks:[{status:'successful'}], now:new Date('2026-09-21') }).code, 'stewardship_owner_approval_required');
+  assert.equal(evaluateStewardshipProposal(profile, proposal, { actorId:'executor', approval:{...approval,headSha:'c'.repeat(40)}, checks:[{status:'successful'}], now:new Date('2026-09-21') }).code, 'stewardship_changed_head');
+});
+
 for (const [name, override, expected] of [
   ['revoked', { revoked: ['grant_1'] }, 'DENY'], ['paused', { state: 'paused' }, 'DENY'],
   ['stale', { observedAt: 1 }, 'INDETERMINATE'], ['expired', { now: 1001, observedAt: 1001 }, 'DENY'],
@@ -84,6 +94,13 @@ test('EXP-EFFECT-003: conditional write, replay identity and immutable evidence'
   const changed = { ...approved, value: 4, expectedVersion: 2 };
   assert.equal(boundary.execute({ approved: changed, tokens, policy: policyFor(chain, changed) }).reason, 'replay_identity_changed');
   assert.equal(boundary.effects, 1);
+});
+
+for (const [name, beforeCommit] of [['resource version', ({state}) => state.version++], ['pending operation', ({pending}) => pending.value = 4]]) test(`EXP-EFFECT-006: rejects ${name} TOCTOU between verification and commit`, () => {
+  const chain=makeChain(), approved=fixtureOperation(), boundary=new SimulatedBoundary();
+  const result=boundary.execute({approved,pending:structuredClone(approved),tokens:encodeChain(chain),policy:policyFor(chain,approved),beforeCommit});
+  assert.equal(result.reason,'boundary_state_changed_before_commit');
+  assert.equal(boundary.effects,0);
 });
 
 for (const [name, options, expected] of [['unobserved', { observable: false }, 'INDETERMINATE'], ['partial', { partial: true }, 'FAIL'], ['diverged', { readback: 99 }, 'FAIL']]) {
