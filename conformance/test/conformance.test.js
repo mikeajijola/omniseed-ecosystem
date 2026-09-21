@@ -5,7 +5,7 @@ import { existsSync } from "node:fs";
 import { cp, mkdir, mkdtemp, readFile, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
-import { deriveFreshness, runConformance, subjectStateDigest } from "../src/index.js";
+import { CERTIFICATION_VALIDITY_SECONDS, deriveFreshness, effectiveFreshness, runConformance, subjectStateDigest } from "../src/index.js";
 import { evaluateRuntimeCompatibility } from "../src/runtime.js";
 import Ajv2020 from "ajv/dist/2020.js";
 import { parse } from "yaml";
@@ -83,6 +83,16 @@ test("freshness is derived from exact subject state and fails closed", () => {
   assert.equal(deriveFreshness(state, null), "indeterminate");
   assert.equal(deriveFreshness(state, { ...state, complete: false }), "indeterminate");
   assert.equal(deriveFreshness(state, { ...state, observationStable: false }), "indeterminate");
+});
+
+test("a current snapshot becomes effectively indeterminate at its documented deadline", () => {
+  const observedAt = "2026-09-21T20:00:00.000Z";
+  const validUntil = new Date(Date.parse(observedAt) + CERTIFICATION_VALIDITY_SECONDS * 1000).toISOString();
+  const report = { freshness: "current", freshnessValidity: { observedAt, validUntil, maximumAgeSeconds: CERTIFICATION_VALIDITY_SECONDS, expiryFreshness: "indeterminate" } };
+  assert.equal(effectiveFreshness(report, validUntil), "current");
+  assert.equal(effectiveFreshness(report, new Date(Date.parse(validUntil) + 1).toISOString()), "indeterminate");
+  assert.equal(effectiveFreshness({ ...report, freshness: "stale" }, "2099-01-01T00:00:00Z"), "stale");
+  assert.equal(effectiveFreshness({ freshness: "current" }, observedAt), "indeterminate");
 });
 
 test("the authoritative Provider set includes Google and declares every canonical ref", async () => {
