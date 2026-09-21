@@ -1,0 +1,6 @@
+{
+  "manifestVersion":"1.0","id":"confluent","organisation":"Confluent","version":"0.1.0","engineCompatibility":">=0.1.0",
+  "primitiveFamilies":["connectors"],"implementations":[{"family":"connectors","products":["Confluent Cloud Kafka","Schema Registry","managed connectors","audit logs"]}],
+  "operations":["plan","apply","observe","invoke"],"configurationSchema":"./configuration.schema.json","observationTypes":["event_delivery","connector_state"],
+  "evidenceTypes":["confluent_delivery_evidence"],"permissions":["topic.consume","topic.produce","sandbox_connector.manage"]
+}

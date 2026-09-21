@@ -12,9 +12,9 @@ const keys = value => value && typeof value === "object" ? Object.entries(value)
 test("coordinated Provider candidates satisfy the strict contract catalogue", () => {
   const validate = new Ajv2020({ allErrors: true }).compile(schema);
   assert.equal(validate(catalogue), true, JSON.stringify(validate.errors));
-  assert.equal(catalogue.candidates.length, 19);
-  assert.equal(new Set(catalogue.candidates.map(candidate => candidate.id)).size, 19);
-  assert.deepEqual(catalogue.candidates.map(candidate => candidate.issue).sort((a, b) => a - b), [34, 35, 36, 37, 38, 39, 40, 41, 42, 45, 46, 47, 48, 49, 50, 51, 52, 55, 56]);
+  assert.equal(catalogue.candidates.length, 20);
+  assert.equal(new Set(catalogue.candidates.map(candidate => candidate.id)).size, 20);
+  assert.deepEqual(catalogue.candidates.map(candidate => candidate.issue).sort((a, b) => a - b), [34, 35, 36, 37, 38, 39, 40, 41, 42, 45, 46, 47, 48, 49, 50, 51, 52, 55, 56, 57]);
 });
 
 test("candidate declarations preserve authority and evidence boundaries", () => {
