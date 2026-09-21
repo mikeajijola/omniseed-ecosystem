@@ -5,6 +5,8 @@ on:
     branches: [main]
   pull_request:
   workflow_dispatch:
+  schedule:
+    - cron: "17 * * * *"
 
 permissions:
   contents: read
@@ -19,67 +21,20 @@ jobs:
         uses: actions/checkout@v7
         with:
           path: omniseed-ecosystem
-      - name: Check out Omniform
-        uses: actions/checkout@v7
-        with:
-          repository: mikeajijola/omniform
-          ref: main
-          path: omniform
-      - name: Check out OmniSeed
-        uses: actions/checkout@v7
-        with:
-          repository: mikeajijola/omniseed
-          ref: main
-          path: omniseed
-      - name: Check out OmniSeed OS
-        uses: actions/checkout@v7
-        with:
-          repository: mikeajijola/omniseedos
-          ref: main
-          path: omniseedos
-      - name: Check out GitHub Provider
-        uses: actions/checkout@v7
-        with:
-          repository: mikeajijola/omniseed-provider-github
-          ref: 73aa6a1d088a24230fba42dc894d723752b1736c
-          path: omniseed-provider-github
-      - name: Check out Vercel Provider
-        uses: actions/checkout@v7
-        with:
-          repository: mikeajijola/omniseed-provider-vercel
-          ref: 6a65f743db11b72fb95c612766b69813ea33c0da
-          path: omniseed-provider-vercel
-      - name: Check out Neon Provider
-        uses: actions/checkout@v7
-        with:
-          repository: mikeajijola/omniseed-provider-neon
-          ref: b8cc57f9411d0cd52732be267b75d4b1da1188f2
-          path: omniseed-provider-neon
-      - name: Check out OmniSeed Provider
-        uses: actions/checkout@v7
-        with:
-          repository: mikeajijola/omniseed-provider-omniseed
-          ref: bfa20da6f2e69e183c491b146897c0afd16344fa
-          path: omniseed-provider-omniseed
-      - name: Check out Omnicede Provider
-        uses: actions/checkout@v7
-        with:
-          repository: mikeajijola/omnicede
-          ref: 20681f2c942c8a6d3bd23b693105992a08e69c3e
-          path: omnicede
-      - name: Check out OmniSeed Ecosystem company
-        uses: actions/checkout@v7
-        with:
-          repository: mikeajijola/omniseed-ecosystem-company
-          path: omniseed-ecosystem-company
       - uses: actions/setup-node@v7
         with:
-          node-version: 22
+          node-version: 24
           cache: npm
           cache-dependency-path: omniseed-ecosystem/package-lock.json
       - name: Install governance dependencies
         run: npm ci
         working-directory: omniseed-ecosystem
+      - name: Resolve and check out governed subjects
+        run: node conformance/src/checkout.js
+        working-directory: omniseed-ecosystem
+      - name: Restore last published certification
+        continue-on-error: true
+        run: curl --fail --silent --show-error --max-time 30 https://mikeajijola.github.io/omniseed-ecosystem/conformance/latest.json -o "$RUNNER_TEMP/certified-conformance.json"
       - name: Install Omniform dependencies
         run: npm ci
         working-directory: omniform
@@ -90,49 +45,50 @@ jobs:
         run: npm ci
         working-directory: omniseedos
       - name: Test
+        id: tests
         run: npm test
         working-directory: omniseed-ecosystem
-      - name: Run conformance
-        run: >-
-          npm run conformance --
-          --omniform ../omniform
-          --engine ../omniseed
-          --os ../omniseedos
-          --github-provider ../omniseed-provider-github
-          --vercel-provider ../omniseed-provider-vercel
-          --provider neon=../omniseed-provider-neon
-          --provider omniseed=../omniseed-provider-omniseed
-          --provider omnicede=../omnicede
-          --company ../omniseed-ecosystem-company
-          --report-kind mainline
-          --freshness current
-          --output reports/main/latest.json
-          --fail-on warning
+      - name: Evaluate candidate
+        id: candidate
+        if: ${{ !cancelled() }}
+        run: npm run conformance -- --report-kind candidate --observe-remotes --output "${{ runner.temp }}/candidate.json" --fail-on warning
+        working-directory: omniseed-ecosystem
+      - name: Observe mainline certification
+        if: ${{ !cancelled() && github.event_name != 'pull_request' }}
+        run: npm run conformance -- --report-kind mainline --observe-remotes --certified-report "${{ runner.temp }}/certified-conformance.json" --output "${{ runner.temp }}/latest.json" --fail-on warning
+        working-directory: omniseed-ecosystem
+      - name: Certify exact passing mainline candidate
+        if: ${{ !cancelled() && github.event_name != 'pull_request' && steps.tests.outcome == 'success' && steps.candidate.outcome == 'success' }}
+        run: npm run conformance -- --report-kind mainline --observe-remotes --certify-candidate "${{ runner.temp }}/candidate.json" --output "${{ runner.temp }}/latest.json" --fail-on warning
         working-directory: omniseed-ecosystem
       - name: Upload conformance report
+        if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v7
         with:
           name: conformance-report
-          path: omniseed-ecosystem/reports/main/latest.json
+          path: |
+            ${{ runner.temp }}/candidate.json
+            ${{ runner.temp }}/latest.json
+          if-no-files-found: error
       - name: Configure Pages
-        if: github.event_name != 'pull_request'
+        if: ${{ !cancelled() && github.event_name != 'pull_request' }}
         uses: actions/configure-pages@v6
       - name: Prepare Pages site
-        if: github.event_name != 'pull_request'
+        if: ${{ !cancelled() && github.event_name != 'pull_request' }}
         run: |
           mkdir -p _site/conformance
-          cp reports/main/latest.json _site/conformance/latest.json
+          cp "$RUNNER_TEMP/latest.json" _site/conformance/latest.json
           cp site/conformance/index.html _site/conformance/index.html
           cp site/index.html _site/index.html
         working-directory: omniseed-ecosystem
       - name: Upload Pages site
-        if: github.event_name != 'pull_request'
+        if: ${{ !cancelled() && github.event_name != 'pull_request' }}
         uses: actions/upload-pages-artifact@v5
         with:
           path: omniseed-ecosystem/_site
 
   deploy-pages:
-    if: github.event_name != 'pull_request'
+    if: ${{ !cancelled() && github.event_name != 'pull_request' }}
     needs: conformance
     runs-on: ubuntu-latest
     environment:

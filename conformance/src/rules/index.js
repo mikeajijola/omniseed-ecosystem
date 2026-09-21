@@ -28,6 +28,7 @@ export const ruleTests = {
   "os-operation-identity": osOperationIdentity,
   "no-agent-provider-bypass": noAgentProviderBypass,
   "package-compatibility": packageCompatibility,
+  "runtime-compatibility": runtimeCompatibility,
   "ownership-documentation": ownershipDocumentation,
   "stable-authority-ids": stableAuthorityIds,
   "github-provider-manifest": githubProviderManifest,
@@ -42,6 +43,12 @@ export const ruleTests = {
   "optional-os-realisation": optionalOsRealisation,
   "ordinary-reconciliation-capability": ordinaryReconciliationCapability
 };
+
+function runtimeCompatibility({ runtimeCompatibility: result }) {
+  if (result.status === "failed") return fail("omniseedos", result.errors.join(" "));
+  const dependencies = result.packages.filter(item => item.path !== ".").map(item => `${item.name}@${item.version} ${item.range}`).join(", ");
+  return pass(`Runner Node ${result.runner.version}; ${result.root.package}@${result.root.version} ${result.root.range}; locked runtime constraints: ${dependencies}; effective range ${result.effectiveRange}.`);
+}
 
 const canonicalPrimitiveFamilies = ["agents", "inference", "skills", "connectors", "workflows", "schedules", "policies", "observations", "memory", "identity", "machines"];
 

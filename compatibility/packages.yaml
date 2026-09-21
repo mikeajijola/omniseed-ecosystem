@@ -9,4 +9,9 @@ channels:
     omniform: 1.0.0-alpha.6
     engine: 1.0.0-alpha.20
     os: 1.0.0-alpha.39
+    status: historical
+  generation-1-stewardship-alpha:
+    omniform: 1.0.0-alpha.7
+    engine: 1.0.0-alpha.22
+    os: 1.0.0-alpha.42
     status: supported

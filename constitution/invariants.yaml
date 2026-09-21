@@ -333,6 +333,15 @@ invariants:
     test: package-compatibility
     remediation: Align package versions with compatibility/packages.yaml.
     owner: omniseed-ecosystem
+  - id: RUNTIME-001
+    principle: EVIDENCE_BEFORE_CLAIMS
+    description: Governed runtime packages and the conformance runner share a compatible Node runtime envelope.
+    severity: critical
+    scope: [omniseedos]
+    deterministic: true
+    test: runtime-compatibility
+    remediation: Align the OS engine range with its locked production dependency graph and execute conformance on a supported Node version.
+    owner: omniseed-ecosystem
   - id: DOC-001
     principle: GOVERNANCE_IS_NOT_RUNTIME
     description: Published ownership documentation matches executable dependency boundaries.
