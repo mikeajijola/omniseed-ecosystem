@@ -8,6 +8,7 @@ import addFormats from "ajv-formats";
 import { parse } from "yaml";
 import { ruleTests } from "./rules/index.js";
 import { compareAuthorities, observeAuthorities } from "./authority.js";
+import { evaluateRuntimeCompatibility } from "./runtime.js";
 
 const root = resolve(new URL("../..", import.meta.url).pathname);
 
@@ -43,6 +44,16 @@ export async function runConformance(options = {}) {
   const before = await createSubjectIdentity({ repositoryRecords: recordsFor(roots), roots, governanceRecord: repositoryRecord(root, root), invariantDigest, governedProviders });
   const remoteBefore = options.observeRemotes ? observeAuthorities(repositoryConfiguration.authorities) : null;
   const context = await buildContext(roots, compatibility);
+  let osLockfile;
+  try { osLockfile = JSON.parse(await context.repositories.omniseedos.read("package-lock.json")); }
+  catch { osLockfile = { packages: { "": context.repositories.omniseedos.manifest } }; }
+  const runtimeCompatibility = evaluateRuntimeCompatibility({
+    manifest: context.repositories.omniseedos.manifest,
+    lockfile: osLockfile,
+    runtimeVersion: process.version,
+    revision: repositoryRecord(roots.omniseedos, root).commit
+  });
+  context.runtimeCompatibility = runtimeCompatibility;
   const findings = [];
 
   for (const invariant of catalogue.invariants) {
@@ -90,6 +101,7 @@ export async function runConformance(options = {}) {
       runnerVersion: runner.version
     },
     repositories: repositoryRecords,
+    runtimeCompatibility,
     summary: {
       passed: findings.filter(item => item.status === "passed").length,
       failed: findings.filter(item => item.status === "failed").length,

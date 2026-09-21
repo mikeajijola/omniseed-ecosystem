@@ -6,6 +6,7 @@ import { cp, mkdir, mkdtemp, readFile, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { deriveFreshness, runConformance, subjectStateDigest } from "../src/index.js";
+import { evaluateRuntimeCompatibility } from "../src/runtime.js";
 import Ajv2020 from "ajv/dist/2020.js";
 import { parse } from "yaml";
 
@@ -22,10 +23,32 @@ test("current ecosystem emits a valid report with no deterministic failures", as
   assert.equal(report.summary.failed, 0, JSON.stringify(report.findings.filter(item => item.status === "failed")));
   assert.ok(report.summary.passed >= 15);
   assert.ok(report.summary.notAutomated >= 1);
-  assert.equal(report.findings.length, 45);
+  assert.equal(report.findings.length, 46);
   assert.equal(report.reportKind, "mainline");
   assert.equal(report.governance.commit.length, 40);
   assert.match(report.governance.invariantsDigest, /^sha256:[0-9a-f]{64}$/);
+});
+
+test("runtime compatibility fails when OS advertises below a required production dependency", () => {
+  const result = evaluateRuntimeCompatibility({
+    manifest: { name: "@omniseed/os", version: "fixture", engines: { node: ">=22" }, dependencies: { "@omniseed/lily": "fixture" } },
+    lockfile: { packages: { "": { dependencies: { "@omniseed/lily": "fixture" } }, "node_modules/@omniseed/lily": { version: "fixture", engines: { node: ">=24" } } } },
+    runtimeVersion: "24.0.0",
+    revision: "a".repeat(40)
+  });
+  assert.equal(result.status, "failed");
+  assert.match(result.errors.join(" "), /advertises versions outside/);
+});
+
+test("runtime compatibility fails before certification on an unsupported runner", () => {
+  const result = evaluateRuntimeCompatibility({
+    manifest: { name: "@omniseed/os", version: "fixture", engines: { node: ">=24" }, dependencies: { "@omniseed/lily": "fixture" } },
+    lockfile: { packages: { "": { dependencies: { "@omniseed/lily": "fixture" } }, "node_modules/@omniseed/lily": { version: "fixture", engines: { node: ">=24" } } } },
+    runtimeVersion: "22.0.0",
+    revision: "a".repeat(40)
+  });
+  assert.equal(result.status, "failed");
+  assert.match(result.errors.join(" "), /Runner Node 22\.0\.0 is outside/);
 });
 
 test("generated OS runtime output is not treated as authored Provider-bypass source", async () => {
